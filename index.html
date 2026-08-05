@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CronoWeb · Generador de horarios escolares</title>
-  <meta name="description" content="Genera el horario de tu escuela sin cruces de profesores en segundos. Funciona en el navegador, sin instalar nada.">
+  <meta name="description" content="Genera el horario de tu escuela sin cruces de profesores en segundos. Sin instalar nada y sin tocar código.">
   <meta name="theme-color" content="#0f766e">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230f766e'/><path d='M16 8v8l5 3' stroke='white' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
   <link rel="stylesheet" href="assets/css/app.css">
@@ -26,154 +26,147 @@
     </button>
   </div>
 
+  <button type="button" class="cw-btn cw-btn--primary" id="btn-generate">Generar horario</button>
+
   <div class="cw-status">
     <span class="cw-dot" id="status-dot"></span>
     <span id="status-text">Listo</span>
   </div>
 </header>
 
-<main class="cw-layout">
+<div class="cw-progress" id="progress" hidden><i></i></div>
 
-  <!-- ══════════════════ Panel de captura ══════════════════ -->
-  <div class="cw-sidebar">
+<main class="cw-shell">
 
-    <section class="cw-panel" style="margin-bottom:16px">
-      <div class="cw-panel__head">
-        <h2>1 · Datos de la escuela</h2>
-        <div class="cw-topbar__spacer"></div>
-        <button type="button" class="cw-btn cw-btn--ghost cw-btn--sm" id="btn-demo">Cargar ejemplo</button>
-      </div>
-      <div class="cw-panel__body">
-        <div class="cw-btn-group" style="margin-bottom:10px">
-          <button type="button" class="cw-btn cw-btn--sm" id="btn-import">Importar archivo…</button>
-          <button type="button" class="cw-btn cw-btn--sm" id="btn-export-json">Guardar escenario</button>
-          <input type="file" id="file-input" accept="application/json,.json" hidden>
+  <!-- ══════════════════ Navegación por pasos ══════════════════ -->
+  <nav class="cw-rail" aria-label="Pasos">
+    <ol class="cw-steps" id="steps"></ol>
+
+    <div class="cw-rail__foot">
+      <div class="cw-rail__stats" id="rail-stats"></div>
+      <button type="button" class="cw-btn cw-btn--sm" id="btn-backup">Guardar respaldo</button>
+      <button type="button" class="cw-btn cw-btn--sm" id="btn-restore">Abrir respaldo…</button>
+      <button type="button" class="cw-btn cw-btn--sm cw-btn--ghost" id="btn-demo">Cargar ejemplo</button>
+      <button type="button" class="cw-btn cw-btn--sm cw-btn--ghost" id="btn-reset">Empezar de cero</button>
+      <input type="file" id="file-input" accept="application/json,.json" hidden>
+    </div>
+  </nav>
+
+  <!-- ══════════════════ Área de trabajo ══════════════════ -->
+  <section class="cw-work">
+
+    <!-- Pantallas de captura -->
+    <div class="cw-panel" id="studio-panel">
+      <div class="cw-panel__body" id="studio"></div>
+      <div class="cw-panel__foot">
+        <div id="review"></div>
+        <div class="cw-btn-group">
+          <button type="button" class="cw-btn" id="btn-prev">← Anterior</button>
+          <button type="button" class="cw-btn" id="btn-next">Siguiente →</button>
         </div>
-
-        <label class="cw-field">
-          <span>Escenario (JSON)</span>
-          <textarea class="cw-json" id="scenario" spellcheck="false"
-            aria-describedby="scenario-help"></textarea>
-          <small id="scenario-help">
-            Rejilla de horas, materias, profesores y grupos. El formato completo está en
-            <code>docs/CONTRACT.md</code>.
-          </small>
-        </label>
-
-        <div id="scenario-errors"></div>
       </div>
-    </section>
+    </div>
 
-    <section class="cw-panel" style="margin-bottom:16px">
-      <div class="cw-panel__head"><h2>2 · Cálculo</h2></div>
+    <!-- Ajustes -->
+    <div class="cw-panel" id="settings-panel" hidden>
       <div class="cw-panel__body">
-        <div class="cw-row">
+        <div class="cw-section-head"><div><h3>Ajustes</h3>
+          <p>Valores técnicos. Los predeterminados funcionan para casi cualquier escuela.</p></div></div>
+
+        <div class="cw-form-grid">
           <label class="cw-field">
             <span>Segundos de cálculo</span>
             <input type="number" id="opt-budget" min="1" max="60" step="1" value="8">
+            <small>Más segundos = más intentos de acomodar las horas difíciles.</small>
           </label>
           <label class="cw-field">
-            <span>Semilla</span>
+            <span>Variante</span>
             <input type="number" id="opt-seed" step="1" value="12345">
-            <small>Cámbiala para obtener otra variante.</small>
-          </label>
-        </div>
-
-        <label class="cw-field">
-          <span>Motor</span>
-          <select id="opt-engine">
-            <option value="local" selected>Local (este navegador)</option>
-            <option value="remote">Servidor CronoWeb (API)</option>
-          </select>
-          <small>El modo local no envía los datos de tu escuela a ningún servidor.</small>
-        </label>
-
-        <label class="cw-field" id="field-api" hidden>
-          <span>URL de la API</span>
-          <input type="url" id="opt-api" placeholder="http://localhost:8000" value="http://localhost:8000">
-        </label>
-
-        <div class="cw-btn-group">
-          <button type="button" class="cw-btn cw-btn--primary" id="btn-generate">Generar horario</button>
-          <button type="button" class="cw-btn" id="btn-validate">Sólo revisar datos</button>
-          <button type="button" class="cw-btn" id="btn-cancel" hidden>Cancelar</button>
-        </div>
-        <div class="cw-progress" id="progress" hidden><i></i></div>
-      </div>
-    </section>
-
-    <section class="cw-panel" id="panel-branding">
-      <div class="cw-panel__head"><h2>3 · Presentación</h2></div>
-      <div class="cw-panel__body">
-        <div id="branding-simple-note" class="cw-msg cw-msg--info">
-          <b>Modo simple</b>
-          Sin logotipos ni datos de la escuela. Cada horario exportado lleva la marca
-          <b style="display:inline">CronoWeb.com</b>.
-        </div>
-
-        <div id="branding-custom-fields" hidden>
-          <label class="cw-field">
-            <span>Nombre de la escuela</span>
-            <input type="text" id="brand-school" placeholder="Escuela Secundaria General N.º 12">
+            <small>Cambia este número para obtener otro horario igual de válido.</small>
           </label>
           <label class="cw-field">
-            <span>Ciclo escolar</span>
-            <input type="text" id="brand-cycle" placeholder="Ciclo 2026-2027">
+            <span>Calidad de la imagen</span>
+            <select id="opt-scale">
+              <option value="2">Alta (2×) — para pantalla</option>
+              <option value="3" selected>Muy alta (3×) — para imprimir</option>
+              <option value="4">Máxima (4×) — para cartel</option>
+            </select>
           </label>
-          <div class="cw-row">
-            <label class="cw-field">
-              <span>Color principal</span>
-              <input type="color" id="brand-color" value="#0f766e">
-            </label>
-            <label class="cw-field">
-              <span>Logotipo</span>
-              <input type="file" id="brand-logo" accept="image/png,image/jpeg,image/svg+xml">
-            </label>
+          <label class="cw-field">
+            <span>Dónde se calcula</span>
+            <select id="opt-engine">
+              <option value="local" selected>En este navegador (recomendado)</option>
+              <option value="remote">En el servidor CronoWeb</option>
+            </select>
+            <small>En el navegador los datos de tu escuela no salen de esta computadora.</small>
+          </label>
+          <label class="cw-field" id="field-api" hidden>
+            <span>Dirección del servidor</span>
+            <input type="url" id="opt-api" placeholder="http://localhost:8000" value="http://localhost:8000">
+          </label>
+        </div>
+
+        <div class="cw-subsection" id="branding-box">
+          <h4>Identidad de la escuela</h4>
+          <div id="branding-simple-note" class="cw-msg cw-msg--info">
+            <b>Modo simple</b>
+            Sin logotipos ni nombre de escuela en los horarios. Cada imagen lleva la marca
+            CronoWeb.com.
           </div>
-          <label class="cw-field">
-            <span>Nota al pie</span>
-            <input type="text" id="brand-note" placeholder="Autorizado por la Dirección Académica">
-          </label>
+          <div id="branding-custom-fields" hidden>
+            <div class="cw-form-grid">
+              <label class="cw-field">
+                <span>Color principal</span>
+                <input type="color" id="brand-color" value="#0f766e">
+              </label>
+              <label class="cw-field">
+                <span>Logotipo</span>
+                <input type="file" id="brand-logo" accept="image/png,image/jpeg,image/svg+xml">
+                <small>PNG o JPG de menos de 1.5 MB.</small>
+              </label>
+              <label class="cw-field">
+                <span>Nota al pie</span>
+                <input type="text" id="brand-note" placeholder="Autorizado por la Dirección Académica">
+              </label>
+            </div>
+          </div>
         </div>
+      </div>
+    </div>
 
-        <label class="cw-field" style="margin-top:12px">
-          <span>Calidad del PNG</span>
-          <select id="opt-scale">
-            <option value="2">Alta (2×) — para pantalla</option>
-            <option value="3" selected>Muy alta (3×) — para imprimir</option>
-            <option value="4">Máxima (4×) — para cartel</option>
-          </select>
+    <!-- Resultados -->
+    <div class="cw-panel" id="results-panel" hidden>
+      <div class="cw-panel__head">
+        <h2>Resultado</h2>
+        <div class="cw-topbar__spacer"></div>
+        <button type="button" class="cw-btn cw-btn--sm" id="btn-export-all">Descargar todas</button>
+        <button type="button" class="cw-btn cw-btn--sm" id="btn-print">Imprimir</button>
+      </div>
+
+      <div class="cw-panel__body" id="summary" hidden>
+        <div class="cw-kpis" id="kpis"></div>
+      </div>
+
+      <div class="cw-tabs" role="tablist" id="result-tabs">
+        <button type="button" role="tab" data-view="horarios" aria-selected="true">Horarios</button>
+        <button type="button" role="tab" data-view="tutors" aria-selected="false">Tutores</button>
+        <button type="button" role="tab" data-view="loads" aria-selected="false">Cargas</button>
+        <button type="button" role="tab" data-view="conflicts" aria-selected="false">
+          Avisos <span class="cw-count" id="conflict-count"></span>
+        </button>
+      </div>
+
+      <div class="cw-exportbar" id="exportbar">
+        <div class="cw-seg" id="view-types" role="group" aria-label="Tipo de horario"></div>
+        <div class="cw-topbar__spacer"></div>
+        <label class="cw-inline-field">
+          <span>Formato</span>
+          <div class="cw-seg" id="formats" role="group" aria-label="Formato de impresión"></div>
         </label>
       </div>
-    </section>
-  </div>
 
-  <!-- ══════════════════ Resultados ══════════════════ -->
-  <section class="cw-panel">
-    <div class="cw-panel__head">
-      <h2>Resultado</h2>
-      <div class="cw-topbar__spacer"></div>
-      <button type="button" class="cw-btn cw-btn--sm" id="btn-export-all" disabled>Exportar todos los PNG</button>
-      <button type="button" class="cw-btn cw-btn--sm" id="btn-print" disabled>Imprimir</button>
-    </div>
-
-    <div class="cw-panel__body" id="summary" hidden>
-      <div class="cw-kpis" id="kpis"></div>
-    </div>
-
-    <div class="cw-tabs" role="tablist">
-      <button type="button" role="tab" data-view="groups" aria-selected="true">Por grupo</button>
-      <button type="button" role="tab" data-view="teachers" aria-selected="false">Por profesor</button>
-      <button type="button" role="tab" data-view="tutors" aria-selected="false">Tutores</button>
-      <button type="button" role="tab" data-view="loads" aria-selected="false">Cargas</button>
-      <button type="button" role="tab" data-view="conflicts" aria-selected="false">
-        Avisos <span class="cw-count" id="conflict-count"></span>
-      </button>
-    </div>
-
-    <div class="cw-results" id="results">
-      <div class="cw-empty">
-        Carga el ejemplo o pega los datos de tu escuela y pulsa <b>Generar horario</b>.
+      <div class="cw-results" id="results">
+        <div class="cw-empty">Genera un horario para ver los resultados.</div>
       </div>
     </div>
   </section>

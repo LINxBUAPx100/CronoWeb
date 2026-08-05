@@ -25,6 +25,47 @@ semanales; se resuelve completo en ~40 ms.
 
 ---
 
+## Captura: cuatro pasos, cero código
+
+Nadie en la escuela ve JSON ni toca archivos. La captura son formularios:
+
+| Paso | Qué se llena |
+|---|---|
+| **1 · Horario** | Nombre de la escuela, ciclo, días de clase, hora de inicio, duración de cada clase (estándar 60 min), número de clases al día y recesos. Las horas de cada bloque **se calculan solas** y se muestran en vivo. |
+| **2 · Materias** | Nombre, abreviatura (lo que se ve en la celda), color —con paleta de un clic— y si conviene darla temprano. Botón para cargar de golpe las materias comunes de secundaria. |
+| **3 · Profesores** | Materias que imparte (chips de un clic), horas máximas por semana y por día, si puede ser tutor, y una **cuadrícula de disponibilidad**: se hace clic en las horas en que NO puede dar clase. Hay atajos para bloquear un día entero o una hora de toda la semana. |
+| **4 · Grados y grupos** | Cada grado con sus grupos (A, B, C…) y su plan de estudios: horas por semana, máximo por día, si la imparte el tutor y si tiene profesor fijo. Un contador marca en verde o rojo si el plan cabe en la semana. |
+
+El botón **Generar horario** revisa antes de calcular: si falta algo, salta al paso
+donde está el problema y lo explica —«Nadie imparte Inglés y el grado 1 la lleva
+4 h»— en vez de fallar con un error técnico.
+
+Todo se guarda solo en el navegador. **Guardar respaldo** descarga un archivo con
+la escuela completa y **Abrir respaldo** la restaura tal cual, con todos los
+formularios llenos.
+
+---
+
+## Exportación: cuatro vistas × dos formatos
+
+| Vista | Para qué sirve |
+|---|---|
+| **Por grupo** | El horario del salón. |
+| **Por profesor** | Lo que cada docente pide el primer día. |
+| **Por grado** | Todos los grupos del grado en una hoja, lado a lado por día. La vista de la dirección. |
+| **Por materia** | Dónde y con quién se imparte una materia en toda la escuela. Para la coordinación académica. |
+
+| Formato | Cómo se ve |
+|---|---|
+| **Técnico** | Denso: abreviaturas, nombre del profesor, tutor, leyenda de materias y conteo de horas. Para la dirección. |
+| **Para alumnos** | Nombre completo de la materia en letra grande, sin datos técnicos ni leyenda. Para imprimir y pegar afuera del salón. |
+
+Cualquier combinación se descarga como PNG con **Descargar PNG**, o todas de golpe
+con **Descargar todas**. La calidad se elige en Ajustes: 2× pantalla, 3× impresión,
+4× cartel.
+
+---
+
 ## Dos motores, un solo contrato
 
 El mismo algoritmo está implementado dos veces contra el mismo JSON
@@ -122,6 +163,15 @@ assets/
   js/
     main.js                  controlador de la interfaz
     gateway.js               enruta a motor local o remoto
+    model/
+      school.js              ← MODELO DE CAPTURA (lo que editan los formularios)
+      serialize.js           traduce modelo ⇄ contrato del motor
+    ui/
+      studio.js              las cuatro pantallas de captura
+      dom.js                 utilidades mínimas de DOM
+      timetable.js           render de horarios (4 vistas × 2 formatos)
+      panels.js              tutores, cargas, avisos
+    export/png.js            html2canvas → PNG
     engine/                  ← MOTOR JS
       contract.js            defaults + validación estructural
       domain.js              compilación a índices enteros
@@ -130,9 +180,6 @@ assets/
       scheduler.js           backtracking + reparación
       metrics.js  report.js  branding.js
       worker.js              Web Worker
-    ui/timetable.js          render de la tabla (y de la tarjeta exportable)
-    ui/panels.js             tutores, cargas, avisos
-    export/png.js            html2canvas → PNG
   vendor/html2canvas.min.js  incluida: la app funciona sin internet
 backend/                     ← MOTOR PYTHON (mismo contrato)
   app/solver/                domain · tutors · validator · scheduler · metrics · report · engine
@@ -229,10 +276,6 @@ para cuando haga falta.
 
 El contrato JSON ya está estable, así que todo esto es aditivo:
 
-- **Captura visual.** Hoy los datos se pegan como JSON. El siguiente paso es un
-  formulario por pestañas (rejilla / materias / profesores / grupos) con una
-  cuadrícula de clics para la disponibilidad de cada profesor. Es lo que separa
-  "funciona" de "una escuela lo usa sola".
 - **Importar desde Excel.** Las escuelas ya tienen su plantilla en hojas de cálculo.
 - **Edición manual con validación en vivo.** Arrastrar una clase y que avise al
   instante si genera un cruce.
