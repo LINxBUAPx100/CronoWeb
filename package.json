@@ -1,0 +1,13 @@
+{
+  "name": "cronoweb",
+  "version": "1.0.0",
+  "description": "Generador de horarios escolares automáticos (CSP). Modo simple 100% en el navegador.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "verify": "node tools/verify-engine.mjs",
+    "serve": "node tools/serve.mjs"
+  },
+  "keywords": ["horarios", "escuela", "csp", "backtracking", "timetable"],
+  "license": "UNLICENSED"
+}

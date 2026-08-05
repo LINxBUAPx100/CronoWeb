@@ -1,0 +1,1045 @@
+{
+  "schema_version": "1.0",
+  "tenant_id": "demo-secundaria",
+  "grid": {
+    "days": [
+      "LUN",
+      "MAR",
+      "MIE",
+      "JUE",
+      "VIE"
+    ],
+    "blocks": [
+      {
+        "id": "B1",
+        "label": "1a",
+        "start": "07:00",
+        "end": "07:50",
+        "kind": "class"
+      },
+      {
+        "id": "B2",
+        "label": "2a",
+        "start": "07:50",
+        "end": "08:40",
+        "kind": "class"
+      },
+      {
+        "id": "B3",
+        "label": "3a",
+        "start": "08:40",
+        "end": "09:30",
+        "kind": "class"
+      },
+      {
+        "id": "R1",
+        "label": "Receso",
+        "start": "09:30",
+        "end": "09:50",
+        "kind": "break"
+      },
+      {
+        "id": "B4",
+        "label": "4a",
+        "start": "09:50",
+        "end": "10:40",
+        "kind": "class"
+      },
+      {
+        "id": "B5",
+        "label": "5a",
+        "start": "10:40",
+        "end": "11:30",
+        "kind": "class"
+      },
+      {
+        "id": "B6",
+        "label": "6a",
+        "start": "11:30",
+        "end": "12:20",
+        "kind": "class"
+      },
+      {
+        "id": "B7",
+        "label": "7a",
+        "start": "12:20",
+        "end": "13:10",
+        "kind": "class"
+      },
+      {
+        "id": "B8",
+        "label": "8a",
+        "start": "13:10",
+        "end": "14:00",
+        "kind": "class"
+      }
+    ]
+  },
+  "subjects": [
+    {
+      "id": "ESP",
+      "name": "Español",
+      "short_name": "Esp",
+      "color": "#2563eb",
+      "prefers_morning": true,
+      "room_requirement": null
+    },
+    {
+      "id": "MAT",
+      "name": "Matemáticas",
+      "short_name": "Mat",
+      "color": "#dc2626",
+      "prefers_morning": true,
+      "room_requirement": null
+    },
+    {
+      "id": "CIE",
+      "name": "Ciencias",
+      "short_name": "Cie",
+      "color": "#059669",
+      "prefers_morning": true,
+      "room_requirement": null
+    },
+    {
+      "id": "HIS",
+      "name": "Historia",
+      "short_name": "His",
+      "color": "#b45309",
+      "prefers_morning": false,
+      "room_requirement": null
+    },
+    {
+      "id": "GEO",
+      "name": "Geografía",
+      "short_name": "Geo",
+      "color": "#0891b2",
+      "prefers_morning": false,
+      "room_requirement": null
+    },
+    {
+      "id": "FCE",
+      "name": "Form. Cívica y Ética",
+      "short_name": "FCyE",
+      "color": "#7c3aed",
+      "prefers_morning": false,
+      "room_requirement": null
+    },
+    {
+      "id": "ING",
+      "name": "Inglés",
+      "short_name": "Ing",
+      "color": "#db2777",
+      "prefers_morning": false,
+      "room_requirement": null
+    },
+    {
+      "id": "EDF",
+      "name": "Educación Física",
+      "short_name": "EdFís",
+      "color": "#65a30d",
+      "prefers_morning": false,
+      "room_requirement": null
+    },
+    {
+      "id": "ART",
+      "name": "Artes",
+      "short_name": "Art",
+      "color": "#ea580c",
+      "prefers_morning": false,
+      "room_requirement": null
+    },
+    {
+      "id": "TEC",
+      "name": "Tecnología",
+      "short_name": "Tec",
+      "color": "#475569",
+      "prefers_morning": false,
+      "room_requirement": null
+    },
+    {
+      "id": "TUT",
+      "name": "Tutoría",
+      "short_name": "Tut",
+      "color": "#0f766e",
+      "prefers_morning": false,
+      "room_requirement": null
+    }
+  ],
+  "teachers": [
+    {
+      "id": "T01",
+      "name": "Laura Méndez",
+      "subject_ids": [
+        "ESP"
+      ],
+      "max_weekly_hours": 24,
+      "max_daily_hours": 6,
+      "availability_mode": "blacklist",
+      "availability": null,
+      "can_be_tutor": true,
+      "tutor_priority": 2,
+      "notes": null
+    },
+    {
+      "id": "T02",
+      "name": "Ricardo Salinas",
+      "subject_ids": [
+        "ESP",
+        "FCE"
+      ],
+      "max_weekly_hours": 24,
+      "max_daily_hours": 6,
+      "availability_mode": "blacklist",
+      "availability": {
+        "VIE": [
+          "B1",
+          "B2",
+          "B3",
+          "B4",
+          "B5",
+          "B6",
+          "B7",
+          "B8"
+        ]
+      },
+      "can_be_tutor": true,
+      "tutor_priority": 0,
+      "notes": "Trabaja en otra escuela los viernes"
+    },
+    {
+      "id": "T03",
+      "name": "Ana Ibarra",
+      "subject_ids": [
+        "MAT"
+      ],
+      "max_weekly_hours": 24,
+      "max_daily_hours": 6,
+      "availability_mode": "blacklist",
+      "availability": null,
+      "can_be_tutor": true,
+      "tutor_priority": 2,
+      "notes": null
+    },
+    {
+      "id": "T04",
+      "name": "Jorge Peña",
+      "subject_ids": [
+        "MAT",
+        "TEC"
+      ],
+      "max_weekly_hours": 24,
+      "max_daily_hours": 6,
+      "availability_mode": "blacklist",
+      "availability": {
+        "LUN": [
+          "B1"
+        ],
+        "MIE": [
+          "B1"
+        ]
+      },
+      "can_be_tutor": true,
+      "tutor_priority": 0,
+      "notes": "Entra a segunda hora lunes y miércoles"
+    },
+    {
+      "id": "T05",
+      "name": "Claudia Ríos",
+      "subject_ids": [
+        "CIE"
+      ],
+      "max_weekly_hours": 22,
+      "max_daily_hours": 6,
+      "availability_mode": "blacklist",
+      "availability": null,
+      "can_be_tutor": true,
+      "tutor_priority": 1,
+      "notes": null
+    },
+    {
+      "id": "T06",
+      "name": "Héctor Villa",
+      "subject_ids": [
+        "CIE",
+        "MAT"
+      ],
+      "max_weekly_hours": 18,
+      "max_daily_hours": 5,
+      "availability_mode": "blacklist",
+      "availability": {
+        "LUN": [
+          "B1",
+          "B2"
+        ],
+        "MAR": [
+          "B1",
+          "B2"
+        ]
+      },
+      "can_be_tutor": true,
+      "tutor_priority": 0,
+      "notes": "Estudia posgrado por las mañanas"
+    },
+    {
+      "id": "T07",
+      "name": "Norma Cruz",
+      "subject_ids": [
+        "HIS",
+        "GEO"
+      ],
+      "max_weekly_hours": 22,
+      "max_daily_hours": 6,
+      "availability_mode": "blacklist",
+      "availability": null,
+      "can_be_tutor": true,
+      "tutor_priority": 1,
+      "notes": null
+    },
+    {
+      "id": "T08",
+      "name": "Pedro Anaya",
+      "subject_ids": [
+        "HIS",
+        "GEO",
+        "FCE"
+      ],
+      "max_weekly_hours": 22,
+      "max_daily_hours": 6,
+      "availability_mode": "blacklist",
+      "availability": {
+        "JUE": [
+          "B7",
+          "B8"
+        ]
+      },
+      "can_be_tutor": true,
+      "tutor_priority": 0,
+      "notes": null
+    },
+    {
+      "id": "T09",
+      "name": "Gaby Torres",
+      "subject_ids": [
+        "ING"
+      ],
+      "max_weekly_hours": 22,
+      "max_daily_hours": 6,
+      "availability_mode": "blacklist",
+      "availability": {
+        "JUE": [
+          "B7",
+          "B8"
+        ]
+      },
+      "can_be_tutor": true,
+      "tutor_priority": 0,
+      "notes": null
+    },
+    {
+      "id": "T10",
+      "name": "Iván Cordero",
+      "subject_ids": [
+        "EDF"
+      ],
+      "max_weekly_hours": 16,
+      "max_daily_hours": 6,
+      "availability_mode": "whitelist",
+      "availability": {
+        "LUN": [
+          "B1",
+          "B2",
+          "B3",
+          "B4",
+          "B5",
+          "B6",
+          "B7",
+          "B8"
+        ],
+        "MIE": [
+          "B1",
+          "B2",
+          "B3",
+          "B4",
+          "B5",
+          "B6",
+          "B7",
+          "B8"
+        ],
+        "VIE": [
+          "B1",
+          "B2",
+          "B3",
+          "B4",
+          "B5",
+          "B6",
+          "B7",
+          "B8"
+        ]
+      },
+      "can_be_tutor": true,
+      "tutor_priority": -1,
+      "notes": "Sólo asiste lunes, miércoles y viernes"
+    },
+    {
+      "id": "T11",
+      "name": "Sofía Blanco",
+      "subject_ids": [
+        "ART"
+      ],
+      "max_weekly_hours": 16,
+      "max_daily_hours": 6,
+      "availability_mode": "whitelist",
+      "availability": {
+        "MAR": [
+          "B1",
+          "B2",
+          "B3",
+          "B4",
+          "B5",
+          "B6",
+          "B7",
+          "B8"
+        ],
+        "JUE": [
+          "B1",
+          "B2",
+          "B3",
+          "B4",
+          "B5",
+          "B6",
+          "B7",
+          "B8"
+        ],
+        "VIE": [
+          "B1",
+          "B2",
+          "B3",
+          "B4",
+          "B5",
+          "B6",
+          "B7",
+          "B8"
+        ]
+      },
+      "can_be_tutor": true,
+      "tutor_priority": -1,
+      "notes": "Comparte plaza con otra secundaria"
+    },
+    {
+      "id": "T12",
+      "name": "Marco Duarte",
+      "subject_ids": [
+        "TEC",
+        "ART"
+      ],
+      "max_weekly_hours": 20,
+      "max_daily_hours": 6,
+      "availability_mode": "blacklist",
+      "availability": null,
+      "can_be_tutor": true,
+      "tutor_priority": 0,
+      "notes": null
+    }
+  ],
+  "groups": [
+    {
+      "id": "1A",
+      "grade": "1",
+      "name": "A",
+      "shift": "matutino",
+      "blocked_slots": [],
+      "curriculum": [
+        {
+          "subject_id": "ESP",
+          "weekly_hours": 5,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "MAT",
+          "weekly_hours": 5,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "CIE",
+          "weekly_hours": 4,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "HIS",
+          "weekly_hours": 3,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "GEO",
+          "weekly_hours": 3,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "FCE",
+          "weekly_hours": 2,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "ING",
+          "weekly_hours": 3,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "EDF",
+          "weekly_hours": 2,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "ART",
+          "weekly_hours": 2,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "TEC",
+          "weekly_hours": 3,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "TUT",
+          "weekly_hours": 1,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": true
+        }
+      ]
+    },
+    {
+      "id": "1B",
+      "grade": "1",
+      "name": "B",
+      "shift": "matutino",
+      "blocked_slots": [],
+      "curriculum": [
+        {
+          "subject_id": "ESP",
+          "weekly_hours": 5,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "MAT",
+          "weekly_hours": 5,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "CIE",
+          "weekly_hours": 4,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "HIS",
+          "weekly_hours": 3,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "GEO",
+          "weekly_hours": 3,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "FCE",
+          "weekly_hours": 2,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "ING",
+          "weekly_hours": 3,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "EDF",
+          "weekly_hours": 2,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "ART",
+          "weekly_hours": 2,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "TEC",
+          "weekly_hours": 3,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "TUT",
+          "weekly_hours": 1,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": true
+        }
+      ]
+    },
+    {
+      "id": "2A",
+      "grade": "2",
+      "name": "A",
+      "shift": "matutino",
+      "blocked_slots": [],
+      "curriculum": [
+        {
+          "subject_id": "ESP",
+          "weekly_hours": 5,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "MAT",
+          "weekly_hours": 5,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "CIE",
+          "weekly_hours": 4,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "HIS",
+          "weekly_hours": 3,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "GEO",
+          "weekly_hours": 3,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "FCE",
+          "weekly_hours": 2,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "ING",
+          "weekly_hours": 3,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "EDF",
+          "weekly_hours": 2,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "ART",
+          "weekly_hours": 2,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "TEC",
+          "weekly_hours": 3,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "TUT",
+          "weekly_hours": 1,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": true
+        }
+      ]
+    },
+    {
+      "id": "2B",
+      "grade": "2",
+      "name": "B",
+      "shift": "matutino",
+      "blocked_slots": [],
+      "curriculum": [
+        {
+          "subject_id": "ESP",
+          "weekly_hours": 5,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "MAT",
+          "weekly_hours": 5,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "CIE",
+          "weekly_hours": 4,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "HIS",
+          "weekly_hours": 3,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "GEO",
+          "weekly_hours": 3,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "FCE",
+          "weekly_hours": 2,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "ING",
+          "weekly_hours": 3,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "EDF",
+          "weekly_hours": 2,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "ART",
+          "weekly_hours": 2,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "TEC",
+          "weekly_hours": 3,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "TUT",
+          "weekly_hours": 1,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": true
+        }
+      ]
+    },
+    {
+      "id": "3A",
+      "grade": "3",
+      "name": "A",
+      "shift": "matutino",
+      "blocked_slots": [],
+      "curriculum": [
+        {
+          "subject_id": "ESP",
+          "weekly_hours": 5,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "MAT",
+          "weekly_hours": 5,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "CIE",
+          "weekly_hours": 4,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "HIS",
+          "weekly_hours": 3,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "GEO",
+          "weekly_hours": 3,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "FCE",
+          "weekly_hours": 2,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "ING",
+          "weekly_hours": 3,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "EDF",
+          "weekly_hours": 2,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "ART",
+          "weekly_hours": 2,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "TEC",
+          "weekly_hours": 3,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "TUT",
+          "weekly_hours": 1,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": true
+        }
+      ]
+    },
+    {
+      "id": "3B",
+      "grade": "3",
+      "name": "B",
+      "shift": "matutino",
+      "blocked_slots": [],
+      "curriculum": [
+        {
+          "subject_id": "ESP",
+          "weekly_hours": 5,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "MAT",
+          "weekly_hours": 5,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "CIE",
+          "weekly_hours": 4,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "HIS",
+          "weekly_hours": 3,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "GEO",
+          "weekly_hours": 3,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "FCE",
+          "weekly_hours": 2,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "ING",
+          "weekly_hours": 3,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "EDF",
+          "weekly_hours": 2,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "ART",
+          "weekly_hours": 2,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "TEC",
+          "weekly_hours": 3,
+          "max_per_day": 2,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": false
+        },
+        {
+          "subject_id": "TUT",
+          "weekly_hours": 1,
+          "max_per_day": 1,
+          "preferred_teacher_id": null,
+          "fixed_teacher_id": null,
+          "assign_to_tutor": true
+        }
+      ]
+    }
+  ],
+  "options": {
+    "time_budget_seconds": 8.0,
+    "max_restarts": 6,
+    "max_branch": 8,
+    "mrv_sample": 48,
+    "seed": 12345,
+    "enable_repair": true,
+    "allow_partial": true
+  },
+  "branding": {
+    "mode": "simple",
+    "school_name": null,
+    "logo_data_url": null,
+    "primary_color": "#0f766e",
+    "cycle_label": "Ciclo 2026-2027",
+    "footer_note": null
+  }
+}
