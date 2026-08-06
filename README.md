@@ -30,9 +30,11 @@ semanales; se resuelve completo en ~40 ms.
 El diseño completo está especificado en **[DESIGN.md](DESIGN.md)**; `assets/css/app.css`
 lo implementa y nada más.
 
-**Concepto: «cuaderno de dirección».** Papel cálido, azul tinta para la estructura
-(encabezados, títulos, foco) y terracota sólo para la acción (botón primario, paso
-activo, la marca).
+**Concepto: «documento oficial bien hecho».** Azul institucional: marino `#14417c`
+para la estructura (encabezados, títulos, reglas, foco) y azul vivo `#0f6fd1` sólo
+para la acción (botón primario, paso activo, la marca). Un solo hue en dos
+intensidades, para que los tres estados —rojo, ámbar, verde— signifiquen algo en
+lugar de competir con la marca.
 
 Tipografía: **Archivo** en la interfaz y los titulares, **Archivo Narrow** dentro
 de la tabla del horario —donde el ancho es oro: «Form. Cívica y Ética» cabe en un

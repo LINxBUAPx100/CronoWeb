@@ -22,8 +22,8 @@
  */
 
 const PALETTE = [
-  '#2f4b7c', '#a03225', '#2e6b4f', '#a06a1e', '#37697e', '#6b4a91',
-  '#a83a63', '#5b7a2a', '#b5541f', '#4a4e57', '#16736b', '#7a4b2a',
+  '#14417c', '#a72b2b', '#1f6b4f', '#9a6410', '#2a6f8f', '#6a3fa0',
+  '#a13066', '#4f6d1f', '#b0531c', '#414a57', '#0f6a72', '#7a4a2c',
 ];
 
 export const FORMATS = [
@@ -101,7 +101,7 @@ export function createView(request, response) {
 }
 
 const accentOf = (view) =>
-  (view.branding.mode === 'custom' ? view.branding.primary_color || '#22375c' : '#22375c');
+  (view.branding.mode === 'custom' ? view.branding.primary_color || '#14417c' : '#14417c');
 
 // --------------------------------------------------------------------------- //
 // Encabezado, pie y marca de agua

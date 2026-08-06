@@ -139,7 +139,7 @@ function prepareClone(clonedDoc, marker, { watermarkRequired, watermarkText, des
     mark.setAttribute('data-cw-watermark', '1');
     mark.style.cssText =
       'text-align:right;font:700 15px -apple-system,Segoe UI,Roboto,sans-serif;' +
-      'color:#bf5730;padding:8px 0 0;';
+      'color:#0f6fd1;padding:8px 0 0;';
     mark.textContent = watermarkText || 'CronoWeb.com';
     clone.appendChild(mark);
   }

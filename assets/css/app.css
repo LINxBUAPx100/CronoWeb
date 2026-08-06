@@ -44,42 +44,41 @@
 }
 
 :root {
-  /* Papel y tinta */
-  --paper: #f7f5f0;
-  --paper-2: #f1eee6;
+  /* Azul institucional · el azul de los documentos oficiales.
+     Un solo hue para marca y acción, en dos intensidades: la interfaz se ve de
+     una pieza y los tres estados (rojo, ámbar, verde) no compiten con ella. */
+  --paper: #f2f5f9;
+  --paper-2: #eef2f7;
   --surface: #ffffff;
-  --ink: #1b1a17;
-  --ink-2: #55504a;
-  --ink-3: #8a837a;
-  --line: #e3ddd2;
-  --line-soft: #eeeae1;
+  --ink: #101a2b;      /* 15.8:1 sobre el fondo */
+  --ink-2: #5a677d;    /*  5.4:1 */
+  --ink-3: #7b899c;    /*  3.4:1 · sólo etiquetas y elementos no textuales */
+  --line: #dfe6ef;
+  --line-soft: #edf1f6;
 
-  /* Azul tinta · ESTRUCTURA */
-  --brand: #22375c;
-  --brand-2: #2e4a78;
-  --brand-soft: #eef1f7;
-  --brand-line: #c6d0e2;
+  /* Azul marino · ESTRUCTURA (encabezados, títulos, foco, reglas) */
+  --brand: #14417c;    /* blanco encima 10.5:1 */
+  --brand-2: #1c579f;
+  --brand-soft: #e8eff8;
+  --brand-line: #bcd0e8;
 
-  /* Terracota · ACCIÓN (uso escaso) */
-  --accent: #bf5730;
-  --accent-2: #9d451f;
-  --accent-soft: #fdf2ec;
-  --accent-line: #f0cdba;
+  /* Azul vivo · ACCIÓN (botón primario, marca, paso activo) */
+  --accent: #0f6fd1;   /* blanco encima 4.9:1 (AA texto normal) */
+  --accent-2: #0b57a8;
+  --accent-soft: #e6f1fd;
+  --accent-line: #b6d6f6;
 
-  /* Estados. `info` reutiliza el azul de marca a propósito: cinco hues
-     compitiendo era parte del problema anterior. */
-  --error: #9e2417; --error-bg: #fcefec; --error-line: #f2c9c1;
-  --warn: #8a5a08;  --warn-bg: #fbf3e2;  --warn-line: #edd8a8;
-  --ok: #2c6144;    --ok-bg: #edf4ef;    --ok-line: #c2ddcc;
-  --info: #2e4a78;  --info-bg: #eef1f7;  --info-line: #c6d0e2;
+  /* Estados. «info» reutiliza el azul de marca: cinco hues compitiendo era
+     parte del problema de las paletas anteriores. */
+  --error: #b42318; --error-bg: #fef3f2; --error-line: #fecdca;
+  --warn: #b54708;  --warn-bg: #fffaeb;  --warn-line: #fedf89;
+  --ok: #067647;    --ok-bg: #ecfdf3;    --ok-line: #abefc6;
+  --info: #1c579f;  --info-bg: #e8eff8;  --info-line: #bcd0e8;
 
   --r-sm: 8px; --r-md: 10px; --r-lg: 14px;
-  --lift-1: 0 1px 2px rgba(27, 26, 23, .08);
-  --lift-2: 0 1px 3px rgba(27, 26, 23, .07), 0 14px 34px -10px rgba(27, 26, 23, .16);
+  --lift-1: 0 1px 2px rgba(16, 26, 43, .08);
+  --lift-2: 0 1px 3px rgba(16, 26, 43, .07), 0 14px 34px -10px rgba(16, 26, 43, .16);
 
-  /* Dos anchos de la misma familia: normal para la interfaz, condensada donde
-     el espacio manda (celdas del horario, encabezados de tabla). «Form. Cívica
-     y Ética» cabe en un renglón en Narrow y se parte en dos en cualquier otra. */
   --font-display: 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-ui: 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
   --font-narrow: 'Archivo Narrow', 'Archivo', 'Segoe UI', Roboto, sans-serif;
@@ -242,12 +241,12 @@ input[type="text"], input[type="number"], input[type="url"], input[type="time"],
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm);
   transition: border-color .14s ease, box-shadow .14s ease;
 }
-input:hover:not(:focus), select:hover:not(:focus) { border-color: #d6cec0; }
+input:hover:not(:focus), select:hover:not(:focus) { border-color: #c3d0e0; }
 input:focus, select:focus { outline: 0; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
 input[type="color"] { width: 40px; height: 33px; padding: 2px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); cursor: pointer; }
 input[type="file"] { font-size: 12px; color: var(--ink-2); }
 input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--brand); cursor: pointer; }
-::placeholder { color: #bdb6ab; opacity: 1; }
+::placeholder { color: #a9b6c6; opacity: 1; }
 .cw-narrow { width: 72px !important; }
 .cw-mid { width: 100%; max-width: 168px; }
 .cw-check { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
@@ -259,7 +258,7 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--brand); 
   color: var(--ink); cursor: pointer; white-space: nowrap;
   transition: background .14s ease, border-color .14s ease, transform .06s ease;
 }
-.cw-btn:hover:not([disabled]) { background: var(--paper); border-color: #d6cec0; }
+.cw-btn:hover:not([disabled]) { background: var(--paper); border-color: #c3d0e0; }
 .cw-btn:active:not([disabled]) { transform: translateY(1px); }
 .cw-btn[disabled] { opacity: .45; cursor: not-allowed; }
 .cw-btn--primary { background: var(--accent); border-color: var(--accent); color: #fff; }
@@ -291,7 +290,7 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--brand); 
   border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 12.5px; font-weight: 500;
   cursor: pointer; transition: background .14s ease, border-color .14s ease, color .14s ease;
 }
-.cw-chip:hover { border-color: #d6cec0; background: var(--paper); }
+.cw-chip:hover { border-color: #c3d0e0; background: var(--paper); }
 .cw-chip--on { border-color: var(--brand-line); color: var(--brand); background: var(--brand-soft); }
 .cw-chip--group { display: inline-flex; align-items: center; gap: 2px; padding: 3px 5px 3px 10px; cursor: default; }
 .cw-chip-input {
@@ -353,7 +352,7 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--brand); 
 
 .cw-list { border-top: 1px solid var(--line); }
 .cw-list__item { border-bottom: 1px solid var(--line-soft); transition: background .14s ease; }
-.cw-list__item.is-open { background: #fdfcfa; }
+.cw-list__item.is-open { background: #fafcfe; }
 .cw-row { display: flex; align-items: center; gap: 10px; padding: 9px 4px; min-height: 50px; flex-wrap: wrap; }
 .cw-row__toggle {
   border: 0; background: transparent; cursor: pointer; padding: 4px 6px; color: var(--ink-3);
@@ -377,9 +376,9 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--brand); 
   cursor: pointer; font-size: 10px; color: var(--error);
   transition: background .1s ease, box-shadow .1s ease;
 }
-.cw-avail:hover { background: var(--paper); box-shadow: inset 0 0 0 1px #d6cec0; }
+.cw-avail:hover { background: var(--paper); box-shadow: inset 0 0 0 1px #c3d0e0; }
 .cw-avail.is-blocked { background: var(--error-bg); box-shadow: inset 0 0 0 1px var(--error-line); }
-.cw-avail.is-blocked:hover { background: #f9e2dd; }
+.cw-avail.is-blocked:hover { background: #fee4e2; }
 .cw-avail-actions { display: flex; gap: 6px; margin-top: 10px; }
 
 .cw-termbar {
@@ -479,7 +478,7 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--brand); 
    Colores en hex/rgba literales a propósito: html2canvas 1.4.1 no interpreta
    color-mix() ni oklch(), y no rasteriza box-shadow (por eso aquí no hay).
    ========================================================================= */
-.cw-card { background: #ffffff; padding: 30px 32px 20px; color: #1b1a17; width: 980px; }
+.cw-card { background: #ffffff; padding: 30px 32px 20px; color: #101a2b; width: 980px; }
 .cw-card--wide { width: 1400px; }
 .cw-card--alumnos { width: 1080px; padding: 38px 40px 26px; }
 
@@ -488,20 +487,20 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--brand); 
 .cw-card__logo { height: 50px; width: auto; max-width: 150px; object-fit: contain; }
 .cw-card__titles { flex: 1; min-width: 0; }
 .cw-card__school {
-  font-size: 10px; font-weight: 700; color: #8a837a;
+  font-size: 10px; font-weight: 700; color: #7b899c;
   text-transform: uppercase; letter-spacing: .16em; margin-bottom: 5px;
 }
 .cw-card__title {
   font-family: 'Archivo', sans-serif; font-size: 31px; font-weight: 700;
-  letter-spacing: -.035em; line-height: 1.06; color: #1b1a17;
+  letter-spacing: -.035em; line-height: 1.06; color: #101a2b;
 }
-.cw-card__meta { font-size: 11.5px; color: #55504a; margin-top: 7px; letter-spacing: .01em; }
+.cw-card__meta { font-size: 11.5px; color: #5a677d; margin-top: 7px; letter-spacing: .01em; }
 .cw-card__aside {
-  text-align: right; font-size: 9.5px; color: #8a837a; flex: none;
+  text-align: right; font-size: 9.5px; color: #7b899c; flex: none;
   text-transform: uppercase; letter-spacing: .12em;
 }
 .cw-card__aside b {
-  display: block; font-size: 15px; color: #1b1a17; font-weight: 600;
+  display: block; font-size: 15px; color: #101a2b; font-weight: 600;
   letter-spacing: -.01em; text-transform: none; margin-bottom: 2px;
 }
 .cw-card__aside > div + div { margin-top: 8px; }
@@ -523,41 +522,41 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--brand); 
 /* Los días: versalitas sobre una regla gruesa. Sin relleno. */
 .cw-timetable thead th {
   font-family: 'Archivo', sans-serif;
-  font-size: 10.5px; font-weight: 700; color: #1b1a17;
+  font-size: 10.5px; font-weight: 700; color: #101a2b;
   text-transform: uppercase; letter-spacing: .17em;
   padding: 0 10px 9px; text-align: left; vertical-align: bottom;
-  border-bottom: 2px solid #22375c;
+  border-bottom: 2px solid #14417c;
 }
 .cw-timetable thead th.cw-th-hour { width: 78px; text-align: right; padding-right: 14px; }
 .cw-timetable .cw-subhead {
-  font-size: 9.5px; letter-spacing: .1em; padding: 6px 10px 7px; color: #55504a;
-  border-bottom: 2px solid #22375c;
+  font-size: 9.5px; letter-spacing: .1em; padding: 6px 10px 7px; color: #5a677d;
+  border-bottom: 2px solid #14417c;
 }
 
 /* Horas: número en serif como ancla de la fila, rango debajo en gris. */
 .cw-timetable .cw-hour {
   text-align: right; padding: 12px 14px 12px 0; vertical-align: top;
-  border-bottom: 1px solid #eeeae1; border-right: 1px solid #e3ddd2;
+  border-bottom: 1px solid #edf1f6; border-right: 1px solid #dfe6ef;
 }
 .cw-timetable .cw-hour b {
   display: block; font-family: 'Archivo', sans-serif;
-  font-size: 19px; font-weight: 700; color: #22375c; line-height: 1; letter-spacing: -.03em;
+  font-size: 19px; font-weight: 700; color: #14417c; line-height: 1; letter-spacing: -.03em;
 }
 .cw-timetable .cw-hour span {
-  display: block; font-size: 9px; color: #a49c92; margin-top: 4px;
+  display: block; font-size: 9px; color: #97a3b3; margin-top: 4px;
   letter-spacing: .04em; white-space: nowrap;
 }
 
 .cw-timetable .cw-break td {
   text-align: center; font-size: 9px; font-weight: 700;
-  color: #a49c92; letter-spacing: .3em; text-transform: uppercase;
-  padding: 9px 6px; border-bottom: 1px solid #eeeae1;
+  color: #97a3b3; letter-spacing: .3em; text-transform: uppercase;
+  padding: 9px 6px; border-bottom: 1px solid #edf1f6;
 }
 
 /* Celdas: sin fondo. Separación por línea horizontal y una vertical tenue. */
 .cw-cell {
   padding: 12px 10px; height: 54px; vertical-align: top;
-  border-bottom: 1px solid #eeeae1; border-right: 1px solid #f5f2ec;
+  border-bottom: 1px solid #edf1f6; border-right: 1px solid #f4f7fa;
 }
 .cw-timetable tr > td:last-child { border-right: 0; }
 .cw-cell__line { display: flex; gap: 9px; align-items: flex-start; }
@@ -565,8 +564,8 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--brand); 
 .cw-cell__key { flex: none; width: 3px; align-self: stretch; min-height: 26px; border-radius: 2px; }
 .cw-cell__body { min-width: 0; }
 .cw-cell__subject { font-size: 12.5px; font-weight: 700; line-height: 1.25; letter-spacing: -.005em; }
-.cw-cell__teacher { font-size: 10.5px; color: #8a837a; line-height: 1.3; margin-top: 3px; }
-.cw-cell--empty { border-bottom: 1px solid #eeeae1; }
+.cw-cell__teacher { font-size: 10.5px; color: #7b899c; line-height: 1.3; margin-top: 3px; }
+.cw-cell--empty { border-bottom: 1px solid #edf1f6; }
 
 /* Formato para alumnos: se lee de pie, a un metro de distancia. */
 .cw-timetable--alumnos thead th { font-size: 13px; letter-spacing: .2em; padding: 0 14px 13px; border-bottom-width: 3px; }
@@ -576,7 +575,7 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--brand); 
 .cw-timetable--alumnos .cw-hour span { font-size: 11px; margin-top: 5px; }
 .cw-timetable--alumnos .cw-cell { height: 82px; padding: 16px 14px; }
 .cw-timetable--alumnos .cw-cell__subject { font-size: 20px; line-height: 1.15; }
-.cw-timetable--alumnos .cw-cell__teacher { font-size: 13px; margin-top: 5px; color: #55504a; }
+.cw-timetable--alumnos .cw-cell__teacher { font-size: 13px; margin-top: 5px; color: #5a677d; }
 .cw-timetable--alumnos .cw-break td { font-size: 11px; padding: 13px 6px; letter-spacing: .34em; }
 .cw-timetable--alumnos .cw-cell__key { width: 4px; min-height: 40px; }
 
@@ -591,26 +590,26 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--brand); 
 /* ── Pie ────────────────────────────────────────────────────────────────── */
 .cw-card__foot {
   display: flex; align-items: flex-end; gap: 18px;
-  padding-top: 14px; margin-top: 18px; border-top: 2px solid #22375c;
+  padding-top: 14px; margin-top: 18px; border-top: 2px solid #14417c;
 }
 .cw-card__legend {
-  display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 9.5px; color: #55504a;
+  display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 9.5px; color: #5a677d;
   text-transform: uppercase; letter-spacing: .07em; font-weight: 500;
 }
 .cw-card__legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: baseline; }
-.cw-card__note { font-size: 10.5px; color: #8a837a; margin-top: 8px; letter-spacing: .02em; }
+.cw-card__note { font-size: 10.5px; color: #7b899c; margin-top: 8px; letter-spacing: .02em; }
 .cw-card--alumnos .cw-card__note { font-size: 13px; }
 
 .cw-watermark { flex: none; text-align: right; }
 .cw-watermark b {
   display: block; font-family: 'Archivo', sans-serif;
-  font-size: 17px; font-weight: 700; color: #bf5730; letter-spacing: -.035em;
+  font-size: 17px; font-weight: 700; color: #0f6fd1; letter-spacing: -.035em;
 }
 .cw-watermark span {
-  display: block; font-size: 8.5px; color: #a49c92;
+  display: block; font-size: 8.5px; color: #97a3b3;
   text-transform: uppercase; letter-spacing: .14em; margin-top: 2px;
 }
-.cw-watermark--soft b { font-size: 10.5px; font-weight: 500; color: #a49c92; letter-spacing: .04em; }
+.cw-watermark--soft b { font-size: 10.5px; font-weight: 500; color: #97a3b3; letter-spacing: .04em; }
 .cw-card--alumnos .cw-watermark b { font-size: 22px; }
 /* =========================================================================
    Modo edición manual
@@ -623,9 +622,9 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--brand); 
 }
 .cw-card.is-editing .cw-cell { cursor: pointer; }
 .cw-card.is-editing .cw-cell:hover { box-shadow: inset 0 0 0 2px var(--brand-line); }
-.cw-cell.is-editing-selected { box-shadow: inset 0 0 0 2px #22375c; }
-.cw-cell.is-editing-target { box-shadow: inset 0 0 0 2px #2c6144; background-color: #edf4ef !important; }
-.cw-cell.is-editing-swap { box-shadow: inset 0 0 0 2px #8a5a08; background-color: #fbf3e2 !important; }
+.cw-cell.is-editing-selected { box-shadow: inset 0 0 0 2px #14417c; }
+.cw-cell.is-editing-target { box-shadow: inset 0 0 0 2px #067647; background-color: #ecfdf3 !important; }
+.cw-cell.is-editing-swap { box-shadow: inset 0 0 0 2px #b54708; background-color: #fffaeb !important; }
 /* Sin pseudo-elementos como marca: html2canvas materializa ::before/::after
    durante el clonado, ANTES del hook que limpia las clases de edición, así que
    un '+' decorativo terminaba impreso en el PNG. El tinte de fondo basta. */

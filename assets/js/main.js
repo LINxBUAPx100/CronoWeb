@@ -685,7 +685,7 @@ function hydrateSettings() {
   $('opt-engine').value = state.prefs.engine;
   $('opt-api').value = state.prefs.apiUrl;
   $('field-api').hidden = state.prefs.engine !== 'remote';
-  $('brand-color').value = state.model.school.primaryColor || '#22375c';
+  $('brand-color').value = state.model.school.primaryColor || '#14417c';
   $('brand-note').value = state.model.school.footerNote || '';
 }
 

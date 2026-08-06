@@ -60,7 +60,7 @@ def resolve_branding(branding: Branding, plan: str) -> Tuple[ResolvedBranding, L
             plan=features.key,
             school_name=None,
             logo_data_url=None,
-            primary_color="#22375c",
+            primary_color="#14417c",
             cycle_label=branding.cycle_label,
             footer_note=None,
             show_logo=False,

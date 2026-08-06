@@ -109,7 +109,7 @@ export function modelToScenario(model, opts = {}) {
       mode: custom ? 'custom' : 'simple',
       school_name: custom ? (model.school.name || null) : null,
       logo_data_url: custom ? (model.school.logo || null) : null,
-      primary_color: custom ? (model.school.primaryColor || '#22375c') : '#22375c',
+      primary_color: custom ? (model.school.primaryColor || '#14417c') : '#14417c',
       cycle_label: [model.school.cycle, termCount(model) > 1 ? termLabel(model) : null]
         .filter(Boolean).join(' · ') || null,
       footer_note: custom ? (model.school.footerNote || null) : null,
@@ -268,7 +268,7 @@ export function scenarioToModel(scenario) {
     name: branding.school_name || '',
     cycle: branding.cycle_label || '',
     logo: branding.logo_data_url || null,
-    primaryColor: branding.primary_color || '#22375c',
+    primaryColor: branding.primary_color || '#14417c',
     footerNote: branding.footer_note || '',
   };
 

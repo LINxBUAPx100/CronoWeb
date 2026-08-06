@@ -7,14 +7,13 @@ si algo se ve distinto en el código, el código está mal.
 
 ## 1 · Tema visual y atmósfera
 
-**Concepto: «Cuaderno de dirección».**
-La herramienta vive en una escuela pública: papeleo, tinta, engargolado, hojas
-pegadas en la puerta del salón. En lugar de disimularlo con estética de SaaS
-—fondo gris azulado, acento turquesa, todo redondeado— el diseño lo abraza:
-papel cálido, tinta azul oscura, un acento terracota de sello, y una grotesca
-robusta en dos anchos, como la señalética y los formatos oficiales.
+**Concepto: «Documento oficial bien hecho».**
+La herramienta vive en una escuela: oficios, formatos sellados, hojas pegadas en
+la puerta del salón. El diseño no lo disimula con estética de SaaS — lo adopta:
+el azul de los documentos oficiales, una grotesca robusta en dos anchos como la
+señalética institucional, y cero decoración.
 
-**Palabras clave:** papel · tinta · sello · institucional · cálido · legible.
+**Palabras clave:** oficial · azul · institucional · sobrio · legible.
 
 **Definición en una frase:** un expediente escolar bien diseñado, no un panel de
 control genérico.
@@ -23,12 +22,18 @@ control genérico.
 Tailwind. Es el uniforme de todo producto generado en 2024-2026 y por eso «se ve
 hecho con IA». El problema no era el turquesa, era la ausencia de decisión.
 
-**Dos roles cromáticos, no uno.** La versión anterior usaba un solo color para
-todo (títulos, botones, encabezados, foco). Aquí:
+**Un hue, dos intensidades, dos roles.**
 
-- **Azul tinta** = estructura. Encabezados de tabla, títulos, foco, navegación.
-- **Terracota** = acción. Sólo botones primarios, paso activo y la marca. Escaso
-  a propósito: si el acento está en todos lados, no acentúa nada.
+- **Azul marino `#14417c`** = estructura. Encabezados de tabla, títulos de hoja,
+  reglas, foco, chips activos.
+- **Azul vivo `#0f6fd1`** = acción. Sólo botón primario, paso activo y la marca.
+
+Que ambos sean el mismo hue es la decisión clave: la interfaz se lee de una
+pieza y los tres estados —rojo, ámbar, verde— quedan libres para significar algo,
+en vez de competir con la marca. Se descartaron guinda, verde pino, grafito+ámbar
+y neutro alto contraste comparándolos con la web completa: el guinda obliga a
+mover el rojo de error a naranja, y el verde pino colisiona con el verde de
+«éxito».
 
 ---
 
@@ -36,58 +41,58 @@ todo (títulos, botones, encabezados, foco). Aquí:
 
 ```css
 :root {
-  /* ── Papel y tinta ─────────────────────────────────────────────── */
-  --paper:        #f7f5f0;   /* 247 245 240 · fondo de aplicación, cálido */
-  --paper-2:      #f1eee6;   /* 241 238 230 · zonas hundidas, celdas alternas */
-  --surface:      #ffffff;   /* 255 255 255 · hojas, tarjetas, campos */
+  /* ── Fondo y tinta ─────────────────────────────────────────────── */
+  --paper:        #f2f5f9;   /* fondo de aplicación */
+  --paper-2:      #eef2f7;   /* zonas hundidas, segmentos */
+  --surface:      #ffffff;   /* hojas, tarjetas, campos */
 
-  --ink:          #1b1a17;   /* 27 26 23   · texto principal   15.9:1 sobre papel */
-  --ink-2:        #55504a;   /* 85 80 74   · texto secundario   7.4:1 sobre papel */
-  --ink-3:        #8a837a;   /* 138 131 122· texto terciario    3.6:1 · sólo ≥14px o no-texto */
-  --line:         #e3ddd2;   /* 227 221 210· divisores visibles */
-  --line-soft:    #eeeae1;   /* 238 234 225· divisores internos */
+  --ink:          #101a2b;   /* texto principal   15.8:1 sobre el fondo */
+  --ink-2:        #5a677d;   /* texto secundario   5.4:1 */
+  --ink-3:        #7b899c;   /* terciario          3.4:1 · sólo etiquetas y no-texto */
+  --line:         #dfe6ef;   /* divisores visibles */
+  --line-soft:    #edf1f6;   /* divisores internos */
 
-  /* ── Azul tinta · ESTRUCTURA ───────────────────────────────────── */
-  --brand:        #22375c;   /* 34 55 92   · blanco encima 11.4:1 */
-  --brand-2:      #2e4a78;   /* 46 74 120  · hover de superficies azules */
-  --brand-soft:   #eef1f7;   /* 238 241 247· fondos seleccionados */
-  --brand-line:   #c6d0e2;   /* 198 208 226· bordes de estado activo */
+  /* ── Azul marino · ESTRUCTURA ──────────────────────────────────── */
+  --brand:        #14417c;   /* blanco encima 10.5:1 */
+  --brand-2:      #1c579f;
+  --brand-soft:   #e8eff8;
+  --brand-line:   #bcd0e8;
 
-  /* ── Terracota · ACCIÓN (uso escaso) ───────────────────────────── */
-  --accent:       #bf5730;   /* 191 87 48  · blanco encima 4.6:1 (AA texto normal) */
-  --accent-2:     #9d451f;   /* 157 69 31  · hover de botón primario */
-  --accent-soft:  #fdf2ec;   /* 253 242 236· fondo del paso activo */
-  --accent-line:  #f0cdba;   /* 240 205 186 */
+  /* ── Azul vivo · ACCIÓN (uso escaso) ───────────────────────────── */
+  --accent:       #0f6fd1;   /* blanco encima 4.9:1 (AA texto normal) */
+  --accent-2:     #0b57a8;
+  --accent-soft:  #e6f1fd;
+  --accent-line:  #b6d6f6;
 
   /* ── Estados ───────────────────────────────────────────────────── */
-  --error:        #9e2417;  --error-bg:  #fcefec;  --error-line:  #f2c9c1;
-  --warn:         #8a5a08;  --warn-bg:   #fbf3e2;  --warn-line:   #edd8a8;
-  --ok:           #2c6144;  --ok-bg:     #edf4ef;  --ok-line:     #c2ddcc;
-  --info:         #2e4a78;  --info-bg:   #eef1f7;  --info-line:   #c6d0e2;
+  --error:        #b42318;  --error-bg:  #fef3f2;  --error-line:  #fecdca;
+  --warn:         #b54708;  --warn-bg:   #fffaeb;  --warn-line:   #fedf89;
+  --ok:           #067647;  --ok-bg:     #ecfdf3;  --ok-line:     #abefc6;
+  --info:         #1c579f;  --info-bg:   #e8eff8;  --info-line:   #bcd0e8;
 }
 ```
 
 **El estado `info` reutiliza el azul de marca a propósito.** Cuatro colores de
 estado + un acento propio = cinco hues compitiendo. Al fundir «informativo» con
-la marca quedan cuatro roles legibles: tinta (neutro/info), terracota (acción),
+la marca quedan cuatro roles legibles: azul (marca e informativo),
 rojo (error), ámbar (aviso), verde (éxito).
 
-**Riesgo asumido:** terracota y rojo de error son vecinos en el círculo cromático.
-Se separan por saturación y contexto: la terracota sólo aparece como relleno
-sólido en botones; el rojo sólo como texto oscuro sobre fondo tenue y siempre con
-la etiqueta «Problema». Nunca hay un botón terracota dentro de un mensaje de error.
+**Ventaja sobre la paleta anterior:** con marca y acción en azul, ningún estado
+comparte hue con la interfaz. Antes la terracota y el rojo de error eran vecinos
+y había que separarlos por saturación y contexto; ahora la distinción es
+automática.
 
 ### Paleta de materias (12 colores)
 
 Se asignan a las materias y se usan como texto (100 %) y como tinte de celda
 (10 %). Todos se mantienen entre 38 % y 46 % de luminosidad para que el texto sea
 legible sobre blanco Y sobre su propio tinte, y están desaturados lo suficiente
-para convivir sobre papel cálido.
+para convivir con el fondo azul claro de la aplicación.
 
 ```
-#2f4b7c azul tinta   #a03225 ladrillo    #2e6b4f pino       #a06a1e ocre
-#37697e pizarra      #6b4a91 uva         #a83a63 vino       #5b7a2a olivo
-#b5541f naranja      #4a4e57 grafito     #16736b jade       #7a4b2a café
+#14417c marino    #a72b2b ladrillo   #1f6b4f pino      #9a6410 ocre
+#2a6f8f pizarra   #6a3fa0 uva        #a13066 vino      #4f6d1f olivo
+#b0531c naranja   #414a57 grafito    #0f6a72 jade      #7a4a2c café
 ```
 
 **Prohibido** en esta paleta: `#22c55e`, `#3b82f6`, `#8b5cf6` y demás colores 500
@@ -198,7 +203,7 @@ al apuntar o escribir.
 ### Paso del riel
 
 Reposo texto `--ink-2`; hover fondo `--paper`; **activo** fondo `--accent-soft`,
-texto `--accent-2`, número en círculo terracota sólido. Deshabilitado 40 % opacidad.
+texto `--accent-2`, número en círculo azul sólido. Deshabilitado 40 % opacidad.
 
 ### Hoja imprimible — composición editorial
 
@@ -299,7 +304,7 @@ Regla dura: nada anima `width`, `height`, `top`, `left` ni `filter`.
 6. Separadores de 1px en vez de cajas.
 7. Sombras cálidas, nunca negro puro.
 8. Todo control interactivo con estado `:hover` **y** `:focus-visible`.
-9. Un solo botón terracota visible a la vez: la barra superior ya tiene el
+9. Un solo botón de acción visible a la vez: la barra superior ya tiene el
    primario permanente («Generar horario»), así que el resto son secundarios.
 
 **No**
