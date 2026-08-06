@@ -80,13 +80,14 @@ el de secundaria serían el mismo grupo para el motor y el horario saldría
 revuelto. Con un solo nivel el id sigue siendo `1A`, que es lo que la escuela
 escribe.
 
-**Cada escuela elige su sistema de periodos:** anual, semestres, cuatrimestres o
-bimestres. Si no es anual, **cada periodo guarda su propio plan de estudios y
-genera su propio horario**: en el 1er semestre pueden llevar Química y en el 2°
-Física. Al abrir un periodo nuevo se copia el plan del anterior (cambiar dos
-materias no debería obligar a recapturar once), y el periodo aparece en la hoja
-impresa y en el nombre del archivo, así que descargar dos semestres en la misma
-carpeta no sobrescribe nada.
+**En preparatoria el grado es un periodo.** Al marcar un grado como preparatoria
+se despliega su periodo: **1er a 6° semestre** —o cuatrimestres o trimestres, que
+valen los mismos seis periodos del bachillerato, o la modalidad anual, que son
+tres años—. Cada periodo es un grado con sus propios grupos y su propio plan de
+estudios: el 1er y el 3er semestre existen al mismo tiempo, se calculan juntos y
+salen en hojas distintas («3er semestre A»), con el periodo también en el nombre
+del archivo. Kínder, primaria y secundaria no tienen periodos y no muestran nada
+de esto: ahí un grado es un año y se captura como número.
 
 El botón **Generar horario** revisa antes de calcular: si falta algo, salta al paso
 donde está el problema y lo explica —«Nadie imparte Inglés y el grado 1 la lleva
@@ -278,6 +279,7 @@ backend/                     ← MOTOR PYTHON (mismo contrato)
 docs/CONTRACT.md             formato JSON — fuente de verdad de ambos motores
 tools/serve.mjs              servidor estático de desarrollo
 tools/verify-engine.mjs      pruebas del motor JS
+tools/verify-model.mjs       pruebas del modelo de captura (periodos, respaldos)
 ```
 
 ---
@@ -286,6 +288,10 @@ tools/verify-engine.mjs      pruebas del motor JS
 
 ```bash
 node tools/verify-engine.mjs
+```
+
+```bash
+node tools/verify-model.mjs
 ```
 
 ```bash
@@ -307,6 +313,13 @@ editor ofrece se aplica y el horario resultante vuelve a pasar por el verificado
 independiente**. Si la validación tuviera un hueco, se cae ahí. También se prueba
 que rechaza los cruces, que respeta la disponibilidad, que el total de horas por
 materia no cambia, y que deshacer y restaurar devuelven el original exacto.
+
+`tools/verify-model.mjs` cubre la capa de captura, donde los errores no revientan
+sino que salen mal impresos: que en prepa el grado y su periodo no se
+desincronicen —si lo hicieran, dos semestres compartirían id de grupo y el
+horario saldría revuelto sin que nada fallara—, que las cuatro modalidades den
+las etiquetas correctas, que el periodo sobreviva la ida y vuelta al contrato y
+que los respaldos anteriores se abran sin perder el plan de estudios.
 
 ---
 

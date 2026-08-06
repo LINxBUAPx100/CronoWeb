@@ -168,6 +168,9 @@ export function normalizeRequest(raw) {
       // Nivel educativo: informativo para el motor, decisivo para las etiquetas
       // y para que «1A» de primaria y «1A» de secundaria no se confundan.
       level: str(g?.level),
+      // Periodo del bachillerato ("3er semestre"). Sólo lo traen los grupos de
+      // preparatoria; como `level`, no lo usa el solver pero manda en la etiqueta.
+      term_label: str(g?.term_label),
       shift: str(g?.shift),
       blocked_slots: asArray(g?.blocked_slots)
         .map((b) => ({ day: str(b?.day, ''), block_id: str(b?.block_id, '') }))

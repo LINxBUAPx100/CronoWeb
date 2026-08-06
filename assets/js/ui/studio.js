@@ -13,8 +13,9 @@
 
 import {
   allGroups, buildBlocks, createGrade, createSubject, createTeacher, DAY_PRESETS,
-  currentTerm, hasMixedLevels, LEVELS, levelOf, nextId, PALETTE, planOf, removeSubject,
-  removeTeacher, syncPlans, termCount, termLabel, termSystemOf, TERM_SYSTEMS, weeklyCapacity,
+  ensureTerm, gradeLabel, hasMixedLevels, isPrepa, LEVELS, levelOf, nextFreeTerm, nextId,
+  PALETTE, planOf, removeSubject, removeTeacher, setTerm, syncPlans, termCountOf, termLabel,
+  termOf, termSystemOf, TERM_SYSTEMS, weeklyCapacity,
 } from '../model/school.js';
 import { abbreviate, shortDay } from '../model/serialize.js';
 import { button, checkbox, clear, field, h, iconButton, input, mount, select } from './dom.js';
@@ -454,66 +455,52 @@ function screenGrupos(ctx) {
         model.grades.push(grade);
         save(); ctx.rerender();
       }, 'cw-btn cw-btn--primary cw-btn--sm')),
-    termBar(ctx),
     model.grades.length
       ? gradesByLevel(ctx)
       : h('div.cw-empty', 'Agrega el primer grado (1°, 2°, 3°…).'));
 }
 
 /**
- * Barra de periodos.
+ * Periodo del grado. Sólo se dibuja en preparatoria.
  *
- * Una primaria trabaja todo el año con el mismo horario y no necesita ver nada
- * de esto; una prepa cambia de materias cada semestre. Por eso el sistema se
- * elige una vez y las pestañas de periodo sólo aparecen cuando hay más de uno.
+ * En prepa el grupo ES su periodo: no existe «2° B», existe «3er semestre B», y
+ * cada semestre lleva materias distintas. Por eso aquí se elige la modalidad del
+ * plantel (semestres, cuatrimestres, trimestres o anual) y qué periodo es este
+ * grado; el plan de estudios de abajo es el de ese periodo.
+ *
+ * En kínder, primaria y secundaria esto no existe y no se dibuja: el grado es un
+ * año y se captura como número.
  */
-function termBar(ctx) {
-  const { model, save } = ctx;
-  const sistema = termSystemOf(model);
-  const total = termCount(model);
+function termPicker(ctx, grade) {
+  const { save } = ctx;
+  const sistema = termSystemOf(grade);
+  const total = termCountOf(grade);
 
-  const selector = h('div.cw-inline-field',
-    h('span', 'Periodos del ciclo'),
-    h('div.cw-seg',
-      TERM_SYSTEMS.map((t) => h('button', {
-        type: 'button',
-        class: `cw-seg__btn${sistema.id === t.id ? ' is-on' : ''}`,
-        title: t.count === 1 ? 'Un solo horario para todo el ciclo'
-          : `${t.count} periodos, cada uno con su propio plan de estudios`,
-        onClick: () => {
-          model.terms = { system: t.id, current: 1 };
-          save(); ctx.rerender();
-        },
-      }, t.label))));
+  const modalidad = select(
+    TERM_SYSTEMS.map((t) => [t.id, t.label]),
+    sistema.id,
+    (v) => {
+      grade.termSystem = v;
+      // Cambiar de modalidad puede dejar el periodo fuera de rango (el 6°
+      // semestre no existe si la escuela pasa a anual): setTerm lo recorta.
+      setTerm(grade, termOf(grade));
+      save(); ctx.rerender();
+    },
+    { class: 'cw-mid', title: 'Cómo divide el ciclo esta preparatoria' },
+  );
 
-  if (total === 1) return h('div.cw-termbar', selector);
+  const periodo = select(
+    Array.from({ length: total }, (_, i) => [String(i + 1), termLabel(grade, i + 1)]),
+    String(termOf(grade)),
+    (v) => { setTerm(grade, v); save(); ctx.rerender(); },
+    { class: 'cw-mid cw-term-select' },
+  );
 
-  const pestañas = h('div.cw-inline-field',
-    h('span', 'Editando'),
-    h('div.cw-seg',
-      Array.from({ length: total }, (_, i) => i + 1).map((n) => h('button', {
-        type: 'button',
-        class: `cw-seg__btn${currentTerm(model) === n ? ' is-on' : ''}`,
-        onClick: () => { model.terms.current = n; save(); ctx.rerender(); },
-      }, termLabel(model, n)))));
-
-  const actual = currentTerm(model);
-  const copiar = actual > 1 && button(`Copiar del ${termLabel(model, actual - 1)}`, () => {
-    if (!confirm(`¿Reemplazar el plan de estudios de todos los grados con el del ${
-      termLabel(model, actual - 1)}?`)) return;
-    for (const grade of model.grades) {
-      grade.plans[actual] = planOf(model, grade, actual - 1).map((e) => ({ ...e }));
-    }
-    save(); ctx.rerender();
-  }, 'cw-btn cw-btn--sm');
-
-  return h('div.cw-termbar',
-    selector,
-    pestañas,
-    copiar || null,
-    h('p.cw-hint',
-      `Cada periodo guarda su propio plan de estudios y genera su propio horario. ` +
-      `Estás editando el ${termLabel(model).toLowerCase()}.`));
+  return h('div.cw-term-picker',
+    h('span.cw-term-picker__label', 'Periodo'),
+    periodo,
+    h('span.cw-term-picker__label', 'de'),
+    modalidad);
 }
 
 /**
@@ -528,9 +515,10 @@ function gradesByLevel(ctx) {
   for (const nivel of LEVELS) {
     const grados = model.grades.filter((g) => levelOf(g).id === nivel.id);
     if (!grados.length) continue;
+    const esPrepa = nivel.id === 'preparatoria';
     salida.push(h('h4.cw-level-head',
       nivel.label,
-      h('span.cw-tag', `${grados.length} grado(s) · ${
+      h('span.cw-tag', `${grados.length} ${esPrepa ? 'periodo(s)' : 'grado(s)'} · ${
         grados.reduce((n, g) => n + g.groups.length, 0)} grupo(s)`)));
     salida.push(...grados.map((grade) => gradeCard(ctx, grade)));
   }
@@ -609,20 +597,34 @@ function gradeCard(ctx, grade) {
 
   refreshTotal();
 
+  const prepa = isPrepa(grade);
+
   return h('section.cw-block',
     h('div.cw-block__head',
-      h('div.cw-grade-title',
-        h('span', 'Grado'),
-        input('text', grade.name, (v) => { grade.name = v; save(); },
-          { class: 'cw-grade-input', placeholder: '1' })),
+      // En prepa el número de grado lo fija el periodo (3er semestre ⇒ «3»), así
+      // que en vez de un campo suelto se muestra el selector de periodo.
+      prepa
+        ? termPicker(ctx, grade)
+        : h('div.cw-grade-title',
+          h('span', 'Grado'),
+          input('text', grade.name, (v) => { grade.name = v; save(); },
+            { class: 'cw-grade-input', placeholder: '1' })),
       // El nivel es parte de la identidad del grupo, no un adorno: si la escuela
       // tiene primaria y secundaria, «1° A» existe dos veces.
       h('div.cw-seg.cw-seg--level',
         LEVELS.map((nivel) => h('button', {
           type: 'button',
           class: `cw-seg__btn${levelOf(grade).id === nivel.id ? ' is-on' : ''}`,
-          title: `${nivel.label} — normalmente ${nivel.grades} grados`,
-          onClick: () => { grade.level = nivel.id; save(); ctx.rerender(); },
+          title: nivel.id === 'preparatoria'
+            ? 'Preparatoria — el grado se captura como periodo (semestre, cuatrimestre…)'
+            : `${nivel.label} — normalmente ${nivel.grades} grados`,
+          onClick: () => {
+            grade.level = nivel.id;
+            // Al marcar «Preparatoria» se despliega el periodo; el número que ya
+            // tenía el grado se aprovecha como periodo si cabe en la modalidad.
+            if (nivel.id === 'preparatoria') ensureTerm(grade);
+            save(); ctx.rerender();
+          },
         }, nivel.label))),
       select([['matutino', 'Matutino'], ['vespertino', 'Vespertino'], ['', 'Sin turno']],
         grade.shift, (v) => { grade.shift = v; save(); }, { class: 'cw-mid' }),
@@ -632,20 +634,28 @@ function gradeCard(ctx, grade) {
       button('Duplicar', () => {
         const copy = JSON.parse(JSON.stringify(grade));
         copy.id = nextId('G', model.grades);
-        const used = new Set(model.grades.map((g) => g.name));
-        let n = Number(grade.name);
-        copy.name = Number.isFinite(n) ? String(++n) : `${grade.name} (copia)`;
-        while (used.has(copy.name)) copy.name = Number.isFinite(n) ? String(++n) : `${copy.name}+`;
+        if (prepa) {
+          // Duplicar el 1er semestre da el 2°: es la forma rápida de capturar
+          // los seis periodos partiendo del plan que ya está lleno.
+          setTerm(copy, nextFreeTerm(model, copy));
+        } else {
+          const used = new Set(model.grades.map((g) => g.name));
+          let n = Number(grade.name);
+          copy.name = Number.isFinite(n) ? String(++n) : `${grade.name} (copia)`;
+          while (used.has(copy.name)) copy.name = Number.isFinite(n) ? String(++n) : `${copy.name}+`;
+        }
         model.grades.splice(model.grades.indexOf(grade) + 1, 0, copy);
         save(); ctx.rerender();
       }, 'cw-btn cw-btn--sm'),
       iconButton('✕', 'Eliminar grado', () => {
-        if (!confirm(`¿Eliminar el grado ${grade.name} y sus ${grade.groups.length} grupo(s)?`)) return;
+        if (!confirm(`¿Eliminar ${gradeLabel(grade)} y sus ${grade.groups.length} grupo(s)?`)) return;
         model.grades = model.grades.filter((g) => g.id !== grade.id);
         save(); ctx.rerender();
       })),
     h('div.cw-subsection', h('h4', 'Grupos'), groupsBox),
-    h('div.cw-subsection', h('h4', 'Plan de estudios'), h('div.cw-scroll-x', planTable),
+    h('div.cw-subsection',
+      h('h4', prepa ? `Plan de estudios del ${termLabel(grade)}` : 'Plan de estudios'),
+      h('div.cw-scroll-x', planTable),
       h('p.cw-hint',
         '«La da el tutor» sirve para Tutoría: la impartirá el profesor que quede como ' +
         'tutor del grupo. «Profesor fijo» obliga a que esa materia la dé una persona concreta.')));

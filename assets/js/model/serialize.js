@@ -12,8 +12,8 @@
  */
 
 import {
-  allGroups, buildBlocks, createEmptyModel, currentTerm, DAY_PRESETS, LEVELS, levelOf,
-  migrateModel, PALETTE, planOf, termCount, termLabel, TERM_SYSTEMS,
+  allGroups, buildBlocks, createEmptyModel, DAY_PRESETS, ensureTerm, LEVELS, levelOf,
+  PALETTE, planOf, setTerm, TERM_SYSTEMS,
 } from './school.js';
 
 /** Etiqueta corta de día para los encabezados de tabla ("Lunes" → "LUN"). */
@@ -59,8 +59,8 @@ export function modelToScenario(model, opts = {}) {
   //
   // Los ids salen de allGroups() y no se calculan aquí: es la única función que
   // sabe si la escuela mezcla niveles y por tanto si «1A» necesita prefijo.
-  const idPorGrupo = new Map(
-    allGroups(model).map((g) => [`${g.grade.id}|${g.group.name}`, g.id]),
+  const porGrupo = new Map(
+    allGroups(model).map((g) => [`${g.grade.id}|${g.group.name}`, g]),
   );
   const groups = [];
   for (const grade of model.grades) {
@@ -76,12 +76,16 @@ export function modelToScenario(model, opts = {}) {
       }));
 
     for (const group of grade.groups) {
+      const meta = porGrupo.get(`${grade.id}|${group.name}`);
       groups.push({
-        id: idPorGrupo.get(`${grade.id}|${group.name}`),
+        id: meta?.id,
         grade: grade.name,
         name: group.name,
         level: levelOf(grade).id,
         shift: grade.shift || null,
+        // Sólo en prepa: «3er semestre». Es lo que se imprime en la hoja del
+        // salón; el motor lo ignora.
+        term_label: meta?.termLabel || null,
         blocked_slots: group.blockedSlots || [],
         curriculum: curriculum.map((entry) => ({ ...entry })),
       });
@@ -110,8 +114,9 @@ export function modelToScenario(model, opts = {}) {
       school_name: custom ? (model.school.name || null) : null,
       logo_data_url: custom ? (model.school.logo || null) : null,
       primary_color: custom ? (model.school.primaryColor || '#14417c') : '#14417c',
-      cycle_label: [model.school.cycle, termCount(model) > 1 ? termLabel(model) : null]
-        .filter(Boolean).join(' · ') || null,
+      // El periodo NO va aquí: en prepa cada grado es un periodo distinto y la
+      // etiqueta viaja por grupo (`term_label`).
+      cycle_label: model.school.cycle || null,
       footer_note: custom ? (model.school.footerNote || null) : null,
     },
   };
@@ -240,15 +245,13 @@ export function scenarioToModel(scenario) {
       );
     }
 
-    return {
+    const grade = {
       id: `G${i + 1}`,
       name: String(gradeName),
       level: LEVELS.some((l) => l.id === first.level) ? first.level : 'secundaria',
       shift: first.shift || 'matutino',
-      // Un escenario del contrato es la foto de UN periodo: al reabrirlo entra
-      // como periodo 1 y desde ahí se pueden crear los demás.
       groups: groupList.map((g) => ({ name: g.name || g.id, blockedSlots: g.blocked_slots || [] })),
-      plans: { 1: model.subjects.map((subject) => {
+      plan: model.subjects.map((subject) => {
         const entry = planned.get(subject.id);
         return {
           subjectId: subject.id,
@@ -258,8 +261,17 @@ export function scenarioToModel(scenario) {
           preferredTeacherId: entry?.preferred_teacher_id || null,
           fixedTeacherId: entry?.fixed_teacher_id || null,
         };
-      }) },
+      }),
     };
+
+    // En prepa el grado es un periodo: se recupera de `term_label` («3er
+    // semestre») y, si el archivo no lo trae, del propio número de grado.
+    if (grade.level === 'preparatoria') {
+      const { systemId, term } = parseTermLabel(first.term_label);
+      ensureTerm(grade, systemId);
+      setTerm(grade, term || Number(grade.name) || 1);
+    }
+    return grade;
   });
 
   // ── Identidad ─────────────────────────────────────────────────────────
@@ -273,6 +285,21 @@ export function scenarioToModel(scenario) {
   };
 
   return { model, warnings };
+}
+
+/**
+ * «3er semestre» → `{ systemId: 'semestral', term: 3 }`.
+ *
+ * Se compara contra la unidad de cada sistema (semestre, cuatrimestre…) en vez
+ * de guardar un campo aparte: la etiqueta ya es texto legible y así el JSON
+ * sigue siendo entendible para quien lo abra en un editor.
+ */
+function parseTermLabel(label) {
+  const texto = String(label || '').toLowerCase();
+  // Con `\b` para que «cuatrimestre» no se lea como «trimestre».
+  const system = TERM_SYSTEMS.find((t) => new RegExp(`\\b${t.unit}`).test(texto));
+  const term = Number((texto.match(/\d+/) || [])[0]) || 0;
+  return { systemId: system?.id, term };
 }
 
 /** `{ LUN: ["B1"] }` (o whitelist) → `["0|B1"]` de horas bloqueadas. */

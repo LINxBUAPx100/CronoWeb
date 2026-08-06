@@ -159,6 +159,10 @@ class Group(_Base):
     # libre a propósito: el solver no lo usa, pero viaja para las etiquetas y
     # para distinguir el 1°A de primaria del 1°A de secundaria.
     level: Optional[str] = Field(default=None, max_length=24)
+    # Periodo del bachillerato ("3er semestre", "2° cuatrimestre"). Sólo lo traen
+    # los grupos de preparatoria, donde el grupo ES su periodo. Como `level`, el
+    # solver no lo usa: viaja para que la hoja impresa diga lo que la prepa dice.
+    term_label: Optional[str] = Field(default=None, max_length=32)
     shift: Optional[str] = Field(default=None, max_length=24)
     blocked_slots: List[SlotRef] = Field(default_factory=list)
     curriculum: List[CurriculumEntry] = Field(default_factory=list)

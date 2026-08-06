@@ -65,6 +65,30 @@ const LEVEL_LABEL = {
   kinder: 'Kínder', primaria: 'Primaria', secundaria: 'Secundaria', preparatoria: 'Preparatoria',
 };
 const levelLabelOf = (group) => LEVEL_LABEL[group?.level] || null;
+
+/**
+ * Cómo se lee el grupo en el cartel del salón.
+ *
+ * En prepa el grado es un periodo y así se anuncia («3er semestre A»); en los
+ * demás niveles es un año («1° A»).
+ */
+const groupTitleOf = (group) =>
+  (group?.term_label ? `${group.term_label} ${group.name}` : `${group?.grade}° ${group?.name}`);
+
+/**
+ * Igual, pero desambiguado cuando el plantel mezcla niveles: ahí «1° A» existe
+ * en primaria y en secundaria, y «3er semestre A» puede convivir con un «3° A»
+ * de secundaria. El periodo ya dice de qué nivel es, así que sólo los demás
+ * niveles necesitan el sufijo.
+ */
+const groupTitleFull = (group, mixed) => {
+  const base = groupTitleOf(group);
+  const nivel = levelLabelOf(group);
+  return mixed && nivel && !group?.term_label ? `${base} de ${nivel.toLowerCase()}` : base;
+};
+
+const mixedLevels = (view) =>
+  new Set((view.request.groups || []).map((g) => g.level || '')).size > 1;
 const gradeKeyOf = (group) => `${group.level || ''}|${group.grade}`;
 const subjectShort = (subject) => subject.short_name || subject.name.slice(0, 6);
 const slug = (text) => String(text).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -368,12 +392,18 @@ function buildGroupCard(view, groupId, format) {
   }, { format });
 
   return {
-    filename: `horario-grupo-${slug(groupLabel(group))}-${format}`,
+    // Por id y no por etiqueta: el id es único por construcción, y «3A» lo
+    // pueden escribir a la vez el 3° de secundaria y el 3er semestre de prepa
+    // —dos hojas distintas que no deben sobrescribirse en la misma carpeta.
+    filename: `horario-grupo-${slug(group.id)}-${format}`,
     legend: [...used],
     table,
     head: {
-      // En el cartel del salón el grupo se lee como lo dice la escuela: «1° A».
-      title: format === 'alumnos' ? `${group.grade}° ${group.name}` : `Horario ${groupLabel(group)}`,
+      // El grupo se lee como lo dice la escuela: «1° A», «3er semestre A».
+      title: format === 'alumnos'
+        ? groupTitleOf(group)
+        : `Horario ${groupTitleFull(group, mixedLevels(view))}`,
+      // El periodo ya va en el título; aquí basta el nivel.
       subtitle: format === 'alumnos'
         ? [levelLabelOf(group), view.branding.cycle_label, tutorName && `Tutor: ${tutorName}`]
           .filter(Boolean).join(' · ')
@@ -436,6 +466,7 @@ function buildGradeCard(view, gradeKey, format) {
     .sort((a, b) => (a.name < b.name ? -1 : 1));
   const gradeName = groups[0]?.grade ?? gradeKey.slice(gradeKey.indexOf('|') + 1);
   const nivel = levelLabelOf(groups[0]);
+  const periodo = groups[0]?.term_label || null;
   const columns = groups.map((group) => ({ key: group.id, label: group.name }));
   const used = new Set();
 
@@ -464,12 +495,14 @@ function buildGradeCard(view, gradeKey, format) {
     .filter(Boolean);
 
   return {
-    filename: `horario-${slug(nivel || 'grado')}-${slug(gradeName)}-${format}`,
+    filename: `horario-${slug(periodo || `${nivel || 'grado'}-${gradeName}`)}-${format}`,
     legend: [...used],
     table,
     head: {
-      title: nivel ? `${gradeName}° de ${nivel.toLowerCase()}` : `${gradeName}° grado`,
-      subtitle: [view.branding.cycle_label, `${groups.length} grupo(s)`,
+      // En prepa el periodo ya nombra al grado: «3er semestre», y el nivel baja
+      // al subtítulo para no escribir «3er semestre de preparatoria».
+      title: periodo || (nivel ? `${gradeName}° de ${nivel.toLowerCase()}` : `${gradeName}° grado`),
+      subtitle: [periodo && nivel, view.branding.cycle_label, `${groups.length} grupo(s)`,
         tutors.length ? `Tutores — ${tutors.join(' · ')}` : null].filter(Boolean).join(' · '),
       aside: [['Grupos', String(groups.length)]],
     },
@@ -527,9 +560,11 @@ export function listTargets(view, type) {
     return [...view.grades.entries()]
       .map(([key, groups]) => {
         const nivel = levelLabelOf(groups[0]);
+        const periodo = groups[0].term_label;
         return {
           id: key,
-          label: nivel ? `${groups[0].grade}° de ${nivel.toLowerCase()}` : `Grado ${groups[0].grade}`,
+          label: periodo
+            || (nivel ? `${groups[0].grade}° de ${nivel.toLowerCase()}` : `Grado ${groups[0].grade}`),
           _orden: [orden[groups[0].level || ''] ?? 3, String(groups[0].grade)],
         };
       })
@@ -542,5 +577,6 @@ export function listTargets(view, type) {
       .filter((s) => scheduled.has(s.id))
       .map((s) => ({ id: s.id, label: s.name }));
   }
-  return view.request.groups.map((g) => ({ id: g.id, label: `Grupo ${groupLabel(g)}` }));
+  const mezcla = mixedLevels(view);
+  return view.request.groups.map((g) => ({ id: g.id, label: groupTitleFull(g, mezcla) }));
 }

@@ -5,7 +5,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "verify": "node tools/verify-engine.mjs",
+    "verify": "node tools/verify-engine.mjs && node tools/verify-model.mjs",
     "serve": "node tools/serve.mjs"
   },
   "keywords": ["horarios", "escuela", "csp", "backtracking", "timetable"],

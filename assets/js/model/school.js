@@ -113,9 +113,6 @@ export function createEmptyModel() {
       days: [...DAY_PRESETS['lun-vie']],
       breaks: [{ afterClass: 3, minutes: 20, label: 'Receso' }],
     },
-    // Sistema de periodos del plantel. «anual» = un solo horario para todo el
-    // ciclo; los demás guardan un plan de estudios por periodo.
-    terms: { system: 'anual', current: 1 },
     subjects: [],
     teachers: [],
     grades: [],
@@ -169,96 +166,177 @@ export const LEVELS = [
   { id: 'preparatoria', label: 'Preparatoria', short: 'Prepa', prefix: 'B', grades: 3 },
 ];
 
+export const levelOf = (grade) => LEVELS.find((l) => l.id === grade?.level) || LEVELS[1];
+
+// --------------------------------------------------------------------------- //
+// Periodos: sólo existen en preparatoria
+// --------------------------------------------------------------------------- //
 /**
- * Sistemas de periodos.
+ * Sistemas de periodos del bachillerato.
  *
- * Una primaria trabaja todo el año con el mismo horario; una prepa cambia de
- * materias cada semestre y una universidad cada cuatrimestre. Por eso el plan de
- * estudios se guarda POR PERIODO (`grade.plans`) y no una sola vez: en el 1er
- * semestre pueden llevar Química y en el 2° Física, y ambos horarios tienen que
- * poder existir y exportarse por separado.
+ * En kínder, primaria y secundaria un grado es un año y punto: «2° B» significa
+ * lo mismo en septiembre que en mayo. En preparatoria no: el grupo ES su
+ * periodo —«3er semestre A»—, y cada periodo lleva materias distintas. Por eso
+ * el selector aparece SÓLO cuando el grado es de preparatoria, y por eso vive
+ * en el grado y no en la escuela: un mismo plantel puede tener el bachillerato
+ * semestral por la mañana y el cuatrimestral por la tarde.
+ *
+ * Los tres sistemas no anuales cubren los mismos seis periodos del bachillerato
+ * (los tres años completos); lo que cambia es cómo los nombra la escuela.
  */
 export const TERM_SYSTEMS = [
-  { id: 'anual', label: 'Anual', unit: 'Ciclo', count: 1 },
-  { id: 'semestral', label: 'Semestres', unit: 'semestre', count: 2 },
-  { id: 'cuatrimestral', label: 'Cuatrimestres', unit: 'cuatrimestre', count: 3 },
-  { id: 'bimestral', label: 'Bimestres', unit: 'bimestre', count: 5 },
+  { id: 'semestral', label: 'Semestres', unit: 'semestre', count: 6 },
+  { id: 'cuatrimestral', label: 'Cuatrimestres', unit: 'cuatrimestre', count: 6 },
+  { id: 'trimestral', label: 'Trimestres', unit: 'trimestre', count: 6 },
+  { id: 'anual', label: 'Anual', unit: 'año', count: 3 },
 ];
 
-export const termSystemOf = (model) =>
-  TERM_SYSTEMS.find((t) => t.id === model?.terms?.system) || TERM_SYSTEMS[0];
+export const DEFAULT_TERM_SYSTEM = 'semestral';
 
-export const termCount = (model) => termSystemOf(model).count;
+/** ¿Este grado se captura por periodos? Sólo la preparatoria. */
+export const isPrepa = (grade) => levelOf(grade).id === 'preparatoria';
 
-/** Periodo activo, siempre dentro del rango del sistema elegido. */
-export const currentTerm = (model) =>
-  Math.min(Math.max(1, Number(model?.terms?.current) || 1), termCount(model));
+export const termSystemOf = (grade) =>
+  TERM_SYSTEMS.find((t) => t.id === grade?.termSystem)
+  || TERM_SYSTEMS.find((t) => t.id === DEFAULT_TERM_SYSTEM);
 
-/** «1er semestre», «3er cuatrimestre», «4° bimestre», «Ciclo completo». */
-export function termLabel(model, n = currentTerm(model)) {
-  const system = termSystemOf(model);
-  if (system.count === 1) return 'Ciclo completo';
-  const ordinal = n === 1 ? '1er' : n === 3 ? '3er' : `${n}°`;
-  return `${ordinal} ${system.unit}`;
+export const termCountOf = (grade) => termSystemOf(grade).count;
+
+/** Periodo del grado, siempre dentro del rango del sistema elegido. */
+export const termOf = (grade) =>
+  Math.min(Math.max(1, Number(grade?.term) || 1), termCountOf(grade));
+
+const ordinal = (n) => (n === 1 ? '1er' : n === 3 ? '3er' : `${n}°`);
+
+/** «1er semestre», «3er cuatrimestre», «2° año». */
+export function termLabel(grade, n = termOf(grade)) {
+  return `${ordinal(n)} ${termSystemOf(grade).unit}`;
 }
 
 /**
- * Plan de estudios del grado para el periodo activo.
- *
- * Si el periodo todavía no tiene plan se copia el del periodo anterior (o el
- * primero): al pasar de semestre casi nada cambia, y empezar de una tabla vacía
- * obligaría a recapturar once materias para cambiar dos.
+ * Cómo se nombra el grado en pantalla y en el horario impreso: «3er semestre»
+ * en prepa, «2°» en los demás niveles.
  */
-export function planOf(model, grade, term = currentTerm(model)) {
-  grade.plans ||= {};
-  if (!grade.plans[term]) {
-    const previo = grade.plans[term - 1] || grade.plans[1] || Object.values(grade.plans)[0] || [];
-    grade.plans[term] = previo.map((entry) => ({ ...entry }));
-  }
-  return grade.plans[term];
+export const gradeLabel = (grade) =>
+  (isPrepa(grade) ? termLabel(grade) : `${grade?.name ?? ''}°`);
+
+/** Igual, pero para meterlo en una frase: «el 3er semestre», «el grado 2». */
+export const gradeTitle = (grade) =>
+  (isPrepa(grade) ? termLabel(grade) : `grado ${grade?.name || '(sin nombre)'}`);
+
+/**
+ * Fija el periodo de un grado de prepa.
+ *
+ * `grade.name` se mantiene igual al número de periodo porque de ahí salen los
+ * ids de grupo («3A») y la columna `grade` del contrato: si se separaran, el
+ * 3er semestre y el 4° acabarían compartiendo id.
+ */
+export function setTerm(grade, n) {
+  grade.term = Math.min(Math.max(1, Number(n) || 1), termCountOf(grade));
+  grade.name = String(grade.term);
+  return grade;
 }
 
-/** Migra modelos guardados antes de que existieran los periodos. */
+/** Al marcar «Preparatoria» el grado estrena periodo; conserva el número si cabe. */
+export function ensureTerm(grade, systemId = DEFAULT_TERM_SYSTEM) {
+  grade.termSystem = TERM_SYSTEMS.some((t) => t.id === grade.termSystem)
+    ? grade.termSystem
+    : systemId;
+  return setTerm(grade, grade.term || Number(grade.name) || 1);
+}
+
+/** Plan de estudios del grado. Uno por grado: en prepa el grado ya ES el periodo. */
+export function planOf(model, grade) {
+  grade.plan ||= model.subjects.map((subject) => ({
+    subjectId: subject.id,
+    hours: 0,
+    maxPerDay: 2,
+    assignToTutor: false,
+  }));
+  return grade.plan;
+}
+
+/**
+ * Migra respaldos anteriores.
+ *
+ * Hubo una versión en que los periodos eran del plantel entero y el plan se
+ * guardaba por periodo (`grade.plans = {1:[…], 2:[…]}`) con una pestaña global
+ * para cambiar de semestre. Nunca terminó de funcionar: obligaba a ver el
+ * horario de un solo periodo a la vez y no servía para lo que las prepas
+ * realmente hacen, que es tener 1° y 3er semestre al mismo tiempo. Ahora cada
+ * grado es un periodo, así que del respaldo viejo se conserva el plan del
+ * periodo que estaba activo.
+ */
 export function migrateModel(model) {
-  model.terms ||= { system: 'anual', current: 1 };
+  const legacy = model.terms || null;
+  const legacySystem = LEGACY_SYSTEMS[legacy?.system] || DEFAULT_TERM_SYSTEM;
+  const legacyCurrent = Math.max(1, Number(legacy?.current) || 1);
+
   for (const grade of model.grades || []) {
-    if (Array.isArray(grade.plan) && !grade.plans) {
-      grade.plans = { 1: grade.plan };
-      delete grade.plan;
+    if (!Array.isArray(grade.plan) && grade.plans) {
+      grade.plan = grade.plans[legacyCurrent] || grade.plans[1] || Object.values(grade.plans)[0] || [];
     }
-    grade.plans ||= { 1: [] };
+    delete grade.plans;
+    grade.plan ||= [];
+    if (isPrepa(grade)) ensureTerm(grade, legacySystem);
   }
+  delete model.terms;
   return model;
 }
 
-export const levelOf = (grade) => LEVELS.find((l) => l.id === grade?.level) || LEVELS[1];
+/** Los bimestres del modelo viejo no eran periodos de plan de estudios. */
+const LEGACY_SYSTEMS = {
+  anual: 'anual',
+  semestral: 'semestral',
+  cuatrimestral: 'cuatrimestral',
+  trimestral: 'trimestral',
+  bimestral: 'semestral',
+};
 
 /** ¿La escuela mezcla niveles? Decide si los ids de grupo necesitan prefijo. */
 export const hasMixedLevels = (model) =>
   new Set(model.grades.map((g) => levelOf(g).id)).size > 1;
 
 export function createGrade(model, name = '') {
-  return {
+  // Se hereda el nivel del último grado capturado: quien está dando de alta
+  // seis grados de primaria no quiere elegir «primaria» seis veces.
+  const previo = model.grades[model.grades.length - 1];
+  const grade = {
     id: nextId('G', model.grades),
     name,
-    // Se hereda el nivel del último grado capturado: quien está dando de alta
-    // seis grados de primaria no quiere elegir «primaria» seis veces.
-    level: model.grades.length ? levelOf(model.grades[model.grades.length - 1]).id : 'secundaria',
-    shift: 'matutino',
+    level: previo ? levelOf(previo).id : 'secundaria',
+    shift: previo?.shift || 'matutino',
     // `blockedSlots` guarda horas en que ese grupo no recibe clase (llegada tarde,
     // taller externo). Se conserva de los respaldos aunque aún no se edite aquí.
     groups: [{ name: 'A', blockedSlots: [] }],
-    // Plan de estudios por GRADO y por PERIODO: todos los grupos del grado
-    // comparten materias y horas dentro del mismo periodo.
-    plans: {
-      1: model.subjects.map((subject) => ({
-        subjectId: subject.id,
-        hours: 0,
-        maxPerDay: 2,
-        assignToTutor: false,
-      })),
-    },
+    // Plan de estudios por GRADO: todos los grupos del grado comparten materias
+    // y horas. En prepa el grado es un periodo, así que el plan es el de ese
+    // semestre/cuatrimestre.
+    plan: model.subjects.map((subject) => ({
+      subjectId: subject.id,
+      hours: 0,
+      maxPerDay: 2,
+      assignToTutor: false,
+    })),
   };
+  // En prepa el nuevo grado toma el primer periodo libre del mismo sistema: dar
+  // de alta los seis semestres es «+ Agregar grado» seis veces, sin corregir.
+  if (isPrepa(grade)) {
+    grade.termSystem = previo?.termSystem || DEFAULT_TERM_SYSTEM;
+    setTerm(grade, nextFreeTerm(model, grade));
+  }
+  return grade;
+}
+
+/** Primer periodo del sistema que ningún otro grado de prepa esté usando. */
+export function nextFreeTerm(model, grade) {
+  const usados = new Set(model.grades
+    .filter((g) => g !== grade && isPrepa(g) && g.termSystem === grade.termSystem)
+    .map((g) => termOf(g)));
+  for (let n = 1; n <= termCountOf(grade); n += 1) {
+    if (!usados.has(n)) return n;
+  }
+  return termOf(grade);
 }
 
 /** Mantiene el plan de cada grado sincronizado con el catálogo de materias. */
@@ -266,17 +344,14 @@ export function syncPlans(model) {
   migrateModel(model);
   const alive = new Set(model.subjects.map((s) => s.id));
   for (const grade of model.grades) {
-    // Todos los periodos, no sólo el activo: si se agrega una materia estando en
-    // el 2° semestre, el 1° no puede quedarse con una tabla desincronizada.
-    for (const [term, plan] of Object.entries(grade.plans)) {
-      const known = new Set(plan.map((entry) => entry.subjectId));
-      for (const subject of model.subjects) {
-        if (!known.has(subject.id)) {
-          plan.push({ subjectId: subject.id, hours: 0, maxPerDay: 2, assignToTutor: false });
-        }
+    const plan = planOf(model, grade);
+    const known = new Set(plan.map((entry) => entry.subjectId));
+    for (const subject of model.subjects) {
+      if (!known.has(subject.id)) {
+        plan.push({ subjectId: subject.id, hours: 0, maxPerDay: 2, assignToTutor: false });
       }
-      grade.plans[term] = plan.filter((entry) => alive.has(entry.subjectId));
     }
+    grade.plan = plan.filter((entry) => alive.has(entry.subjectId));
   }
 }
 
@@ -304,9 +379,11 @@ export function removeTeacher(model, teacherId) {
 export const groupIdOf = (grade, group, prefix = '') =>
   `${prefix}${grade.name}${group.name}`.replace(/\s+/g, '');
 
-/** Etiqueta humana: «1° A de primaria». */
+/** Etiqueta humana: «1° A de primaria», «3er semestre A». */
 export const groupFullLabel = (grade, group) =>
-  `${grade.name}° ${group.name} de ${levelOf(grade).label.toLowerCase()}`;
+  (isPrepa(grade)
+    ? `${termLabel(grade)} ${group.name}`
+    : `${grade.name}° ${group.name} de ${levelOf(grade).label.toLowerCase()}`);
 
 /** Todos los grupos del plantel, aplanados, con su grado y nivel. */
 export function allGroups(model) {
@@ -322,6 +399,9 @@ export function allGroups(model) {
         level,
         label: `${grade.name}${group.name}`,
         fullLabel: groupFullLabel(grade, group),
+        // Viaja al contrato para que la hoja impresa diga «3er semestre A» y no
+        // «3° A»: el motor no lo usa, pero es lo que la prepa espera leer.
+        termLabel: isPrepa(grade) ? termLabel(grade) : null,
       });
     }
   }
@@ -373,25 +453,21 @@ export function reviewModel(model) {
   }
 
   for (const grade of model.grades) {
+    const título = gradeTitle(grade);
     if (!grade.groups.length) {
-      issues.push({
-        level: 'error',
-        message: `El grado ${grade.name || '(sin nombre)'} no tiene grupos.`,
-        screen: 'grupos',
-      });
+      issues.push({ level: 'error', message: `El ${título} no tiene grupos.`, screen: 'grupos' });
     }
     const hours = planOf(model, grade).reduce((acc, entry) => acc + (Number(entry.hours) || 0), 0);
     if (hours === 0) {
       issues.push({
         level: 'error',
-        message: `El grado ${grade.name || '(sin nombre)'} no tiene horas en su plan de estudios`
-          + `${termCount(model) > 1 ? ` del ${termLabel(model)}` : ''}.`,
+        message: `El ${título} no tiene horas en su plan de estudios.`,
         screen: 'grupos',
       });
     } else if (hours > capacity) {
       issues.push({
         level: 'error',
-        message: `El grado ${grade.name} pide ${hours} h y sólo caben ${capacity} en la semana.`,
+        message: `El ${título} pide ${hours} h y sólo caben ${capacity} en la semana.`,
         screen: 'grupos',
       });
     }
@@ -405,7 +481,7 @@ export function reviewModel(model) {
         const subject = model.subjects.find((s) => s.id === entry.subjectId);
         issues.push({
           level: 'error',
-          message: `Nadie imparte ${subject?.name || entry.subjectId} y el grado ${grade.name} la lleva ${entry.hours} h.`,
+          message: `Nadie imparte ${subject?.name || entry.subjectId} y el ${título} la lleva ${entry.hours} h.`,
           screen: 'profesores',
         });
       }
@@ -416,8 +492,8 @@ export function reviewModel(model) {
   if (new Set(ids).size !== ids.length) {
     issues.push({
       level: 'error',
-      message: 'Hay dos grupos con el mismo nombre y nivel (por ejemplo dos "1A" de secundaria). ' +
-        'Cámbiale la letra a uno.',
+      message: 'Hay dos grupos con el mismo nombre y nivel (dos "1A" de secundaria, o dos grados ' +
+        'de prepa en el mismo semestre con el grupo A). Cámbiale la letra o el periodo a uno.',
       screen: 'grupos',
     });
   }

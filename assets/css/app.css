@@ -201,6 +201,11 @@ button { font-family: inherit; }
 .cw-rail__stats { display: flex; flex-direction: column; gap: 1px; font-size: 12px; color: var(--ink-3); margin-bottom: 10px; }
 .cw-rail__stats b { color: var(--ink); font-weight: 500; }
 
+/* Toggle de la sección inferior de la barra lateral */
+.cw-rail--collapsed .cw-rail__foot { display: none; }
+.cw-rail__toggle { align-self: flex-start; margin-bottom: 8px; padding: 6px 10px; border-radius: 8px; border: 0; background: transparent; color: var(--ink-2); cursor: pointer; font-size: 13px; }
+.cw-rail__toggle:hover { color: var(--ink); background: var(--paper-2); }
+
 .cw-work { min-width: 0; padding: 30px 34px 96px; }
 .cw-work > section { max-width: 1120px; margin: 0 auto; }
 #results-panel { max-width: none; }
@@ -381,12 +386,18 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--brand); 
 .cw-avail.is-blocked:hover { background: #fee4e2; }
 .cw-avail-actions { display: flex; gap: 6px; margin-top: 10px; }
 
-.cw-termbar {
-  display: flex; align-items: center; gap: 14px 20px; flex-wrap: wrap;
-  padding: 14px 16px; margin-bottom: 22px;
-  background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-md);
+/* Periodo del grado: se despliega sólo en preparatoria, en el lugar donde los
+   demás niveles llevan el número de grado. */
+.cw-term-picker {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 5px 10px 5px 12px; border-radius: var(--r-sm);
+  background: var(--paper-2); border: 1px solid var(--line);
 }
-.cw-termbar .cw-hint { width: 100%; margin: 0; }
+.cw-term-picker__label { font-size: 12.5px; color: var(--ink-3); font-weight: 500; }
+.cw-term-picker select { min-width: 0; }
+.cw-term-select {
+  font-family: var(--font-display) !important; font-weight: 700 !important; color: var(--ink) !important;
+}
 
 /* Nivel educativo: el selector va en el encabezado del grado y los grados se
    agrupan bajo su nivel cuando la escuela tiene más de uno. */

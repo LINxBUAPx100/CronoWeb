@@ -6,7 +6,13 @@
 # siempre. Este workflow publica el repositorio tal cual, con log visible en la
 # pestaña Actions, y falla ruidosamente si algo va mal.
 #
-# Requiere una vez: Settings → Pages → Source: **GitHub Actions**.
+# REQUIERE UNA VEZ: Settings → Pages → Source: **GitHub Actions**.
+#
+# Mientras esa opción siga en «Deploy from a branch», este workflow NO puede
+# publicar: `actions/deploy-pages` sólo acepta despliegues cuando la fuente es
+# Actions, y además GitHub sigue lanzando en paralelo su builder de Jekyll
+# («pages build and deployment»), que es el que aparece fallando en la pestaña
+# Actions sin log útil. Cambiar la fuente apaga ese builder y habilita éste.
 #
 # UN SOLO JOB a propósito. Con dos (verificar → publicar) hay que arrancar dos
 # runners y resolver el doble de acciones desde el CDN de GitHub; cuando ese CDN
@@ -50,6 +56,9 @@ jobs:
       # una acción más que resolver.
       - name: Pruebas del motor y del editor
         run: node tools/verify-engine.mjs
+
+      - name: Pruebas del modelo de captura
+        run: node tools/verify-model.mjs
 
       - name: Comprobar que están los archivos que el sitio necesita
         run: |

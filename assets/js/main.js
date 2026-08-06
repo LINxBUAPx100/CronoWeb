@@ -16,7 +16,7 @@ import { exportNodeAsPng, exportNodesAsPng } from './export/png.js';
 import { GatewayError, SolverGateway } from './gateway.js';
 import {
   allGroups, createEmptyModel, createGrade, createSubject, createTeacher, migrateModel,
-  reviewModel, syncPlans, termCount, termLabel,
+  reviewModel, syncPlans,
 } from './model/school.js';
 import { createEditSession, isDirty, rebuildResponse, resetSession, undo } from './model/edit.js';
 import { modelToScenario, scenarioToModel } from './model/serialize.js';
@@ -82,8 +82,9 @@ function restore() {
     }
     const model = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
     if (model?.subjects) {
-      // Los modelos guardados antes de los periodos traen grade.plan; migrateModel
-      // los convierte a grade.plans sin que la escuela pierda nada.
+      // Los respaldos viejos traen los periodos como una pestaña del plantel
+      // (`model.terms` + `grade.plans`); migrateModel los pasa al esquema actual
+      // —un grado por periodo— sin que la escuela pierda nada.
       state.model = migrateModel(model);
       syncPlans(state.model);
       return true;
@@ -335,13 +336,9 @@ function renderResults() {
  * romper el ancho de la página.
  */
 function sheet(view, target) {
+  // El nombre del archivo lo arma renderTimetableCard: en prepa ya trae el
+  // periodo («horario-3er-semestre-…»), porque cada grado ES un periodo.
   const card = renderTimetableCard(view, { type: state.viewType, id: target.id, format: state.format });
-  // El periodo entra en el nombre del archivo: descargar los horarios de dos
-  // semestres en la misma carpeta no debe sobrescribir nada.
-  if (termCount(state.model) > 1) {
-    card.dataset.exportName = `${card.dataset.exportName}-${
-      termLabel(state.model).replace(/[^0-9a-zA-Záéíóú]+/g, '-').toLowerCase()}`;
-  }
 
   const download = h('button.cw-btn.cw-btn--sm', { type: 'button' }, 'Descargar PNG');
   download.addEventListener('click', () => downloadCard(card, download));
@@ -397,6 +394,36 @@ function ensureEditSession() {
   }
   return state.editSession;
 }
+
+// --------------------------------------------------------------------------- //
+// Toggle para ocultar/mostrar la sección inferior de la barra lateral
+// --------------------------------------------------------------------------- //
+function initRailFooterToggle() {
+  const RAIL = document.querySelector('.cw-rail');
+  if (!RAIL) return;
+  const FOOT = RAIL.querySelector('.cw-rail__foot');
+  if (!FOOT) return;
+
+  const key = 'cronoweb.railCollapsed';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.id = 'btn-toggle-railfoot';
+  btn.className = 'cw-rail__toggle';
+
+  const collapsed = localStorage.getItem(key) === 'true';
+  if (collapsed) RAIL.classList.add('cw-rail--collapsed');
+  btn.textContent = RAIL.classList.contains('cw-rail--collapsed') ? 'Mostrar opciones' : 'Ocultar opciones';
+
+  btn.addEventListener('click', () => {
+    const now = RAIL.classList.toggle('cw-rail--collapsed');
+    localStorage.setItem(key, now ? 'true' : 'false');
+    btn.textContent = now ? 'Mostrar opciones' : 'Ocultar opciones';
+  });
+
+  RAIL.insertBefore(btn, FOOT);
+}
+
+initRailFooterToggle();
 
 function detachEditor() {
   if (state.editorHandle) {
