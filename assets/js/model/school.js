@@ -17,9 +17,8 @@
  */
 
 export const PALETTE = [
-  '#2563eb', '#dc2626', '#059669', '#b45309', '#0891b2', '#7c3aed',
-  '#db2777', '#65a30d', '#ea580c', '#475569', '#0f766e', '#9333ea',
-  '#0284c7', '#be123c', '#4d7c0f', '#7e22ce',
+  '#2f4b7c', '#a03225', '#2e6b4f', '#a06a1e', '#37697e', '#6b4a91',
+  '#a83a63', '#5b7a2a', '#b5541f', '#4a4e57', '#16736b', '#7a4b2a',
 ];
 
 export const DAY_PRESETS = {
@@ -106,7 +105,7 @@ export const weeklyCapacity = (model) =>
 export function createEmptyModel() {
   return {
     version: 2,
-    school: { name: '', cycle: '', logo: null, primaryColor: '#0f766e', footerNote: '' },
+    school: { name: '', cycle: '', logo: null, primaryColor: '#22375c', footerNote: '' },
     time: {
       startTime: '07:00',
       classMinutes: 60,

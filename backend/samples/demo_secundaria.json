@@ -80,7 +80,7 @@
       "id": "ESP",
       "name": "Español",
       "short_name": "Esp",
-      "color": "#2563eb",
+      "color": "#2f4b7c",
       "prefers_morning": true,
       "room_requirement": null
     },
@@ -88,7 +88,7 @@
       "id": "MAT",
       "name": "Matemáticas",
       "short_name": "Mat",
-      "color": "#dc2626",
+      "color": "#a03225",
       "prefers_morning": true,
       "room_requirement": null
     },
@@ -96,7 +96,7 @@
       "id": "CIE",
       "name": "Ciencias",
       "short_name": "Cie",
-      "color": "#059669",
+      "color": "#2e6b4f",
       "prefers_morning": true,
       "room_requirement": null
     },
@@ -104,7 +104,7 @@
       "id": "HIS",
       "name": "Historia",
       "short_name": "His",
-      "color": "#b45309",
+      "color": "#a06a1e",
       "prefers_morning": false,
       "room_requirement": null
     },
@@ -112,7 +112,7 @@
       "id": "GEO",
       "name": "Geografía",
       "short_name": "Geo",
-      "color": "#0891b2",
+      "color": "#37697e",
       "prefers_morning": false,
       "room_requirement": null
     },
@@ -120,7 +120,7 @@
       "id": "FCE",
       "name": "Form. Cívica y Ética",
       "short_name": "FCyE",
-      "color": "#7c3aed",
+      "color": "#6b4a91",
       "prefers_morning": false,
       "room_requirement": null
     },
@@ -128,7 +128,7 @@
       "id": "ING",
       "name": "Inglés",
       "short_name": "Ing",
-      "color": "#db2777",
+      "color": "#a83a63",
       "prefers_morning": false,
       "room_requirement": null
     },
@@ -136,7 +136,7 @@
       "id": "EDF",
       "name": "Educación Física",
       "short_name": "EdFís",
-      "color": "#65a30d",
+      "color": "#5b7a2a",
       "prefers_morning": false,
       "room_requirement": null
     },
@@ -144,7 +144,7 @@
       "id": "ART",
       "name": "Artes",
       "short_name": "Art",
-      "color": "#ea580c",
+      "color": "#b5541f",
       "prefers_morning": false,
       "room_requirement": null
     },
@@ -152,7 +152,7 @@
       "id": "TEC",
       "name": "Tecnología",
       "short_name": "Tec",
-      "color": "#475569",
+      "color": "#4a4e57",
       "prefers_morning": false,
       "room_requirement": null
     },
@@ -160,7 +160,7 @@
       "id": "TUT",
       "name": "Tutoría",
       "short_name": "Tut",
-      "color": "#0f766e",
+      "color": "#16736b",
       "prefers_morning": false,
       "room_requirement": null
     }
@@ -1026,7 +1026,7 @@
     }
   ],
   "options": {
-    "time_budget_seconds": 8.0,
+    "time_budget_seconds": 8,
     "max_restarts": 6,
     "max_branch": 8,
     "mrv_sample": 48,
@@ -1038,7 +1038,7 @@
     "mode": "simple",
     "school_name": null,
     "logo_data_url": null,
-    "primary_color": "#0f766e",
+    "primary_color": "#22375c",
     "cycle_label": "Ciclo 2026-2027",
     "footer_note": null
   }

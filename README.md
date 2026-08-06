@@ -25,6 +25,35 @@ semanales; se resuelve completo en ~40 ms.
 
 ---
 
+## Interfaz
+
+El diseño completo está especificado en **[DESIGN.md](DESIGN.md)**; `assets/css/app.css`
+lo implementa y nada más.
+
+**Concepto: «cuaderno de dirección».** Papel cálido, azul tinta para la estructura
+(encabezados, títulos, foco) y terracota sólo para la acción (botón primario, paso
+activo, la marca). Titulares en **Instrument Serif**, interfaz en **DM Sans** —
+ambas OFL y alojadas en el repositorio (`assets/fonts/`, 76 KB), porque la app
+debe abrir sin internet.
+
+Una sola superficie continua: la jerarquía se construye con espacio en blanco,
+cambio de **familia tipográfica** y líneas de un píxel, no con paneles anidados.
+Las únicas cajas que quedan son las que representan algo físico — la hoja
+imprimible y los controles.
+
+**Responsiva de verdad**, verificada sin desbordamiento horizontal en las cinco
+pantallas a 390 px:
+
+- **≤ 900 px** — el riel de pasos pasa a ser una barra horizontal desplazable
+  bajo el encabezado.
+- **≤ 640 px** — los formularios se apilan en una columna, el selector de modo
+  se muda a Ajustes (no cabe junto al botón principal) y los objetivos táctiles
+  crecen.
+- Las tablas anchas y los horarios de 980–1400 px se desplazan **dentro de su
+  propio marco**; la página nunca se mueve en horizontal.
+
+---
+
 ## Captura: cuatro pasos, cero código
 
 Nadie en la escuela ve JSON ni toca archivos. La captura son formularios:

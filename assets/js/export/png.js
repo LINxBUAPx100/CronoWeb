@@ -100,6 +100,18 @@ function triggerDownload(blob, filename) {
  * html2canvas en un iframe aislado; nada de lo que se toque aquí afecta la página.
  */
 function prepareClone(clonedDoc, marker, { watermarkRequired, watermarkText, designWidth }) {
+  // (0) Congelar animaciones y transiciones en el clon.
+  //
+  // html2canvas clona el documento en un iframe: cualquier animación con
+  // fill-mode 'both' vuelve a empezar y se rasteriza su PRIMER fotograma. Si ese
+  // fotograma es `opacity: 0` —como la animación de entrada de pantalla— el PNG
+  // sale en blanco. Es un fallo silencioso: no lanza error, sólo entrega una
+  // imagen vacía. Congelarlo aquí lo vuelve imposible por construcción.
+  const freeze = clonedDoc.createElement('style');
+  freeze.textContent =
+    '*, *::before, *::after { animation: none !important; transition: none !important; }';
+  clonedDoc.head.appendChild(freeze);
+
   const clone = clonedDoc.querySelector(`[data-cw-export="${marker}"]`);
   if (!clone) return;
 
@@ -122,7 +134,7 @@ function prepareClone(clonedDoc, marker, { watermarkRequired, watermarkText, des
     mark.setAttribute('data-cw-watermark', '1');
     mark.style.cssText =
       'text-align:right;font:700 15px -apple-system,Segoe UI,Roboto,sans-serif;' +
-      'color:#0f766e;padding:8px 0 0;';
+      'color:#bf5730;padding:8px 0 0;';
     mark.textContent = watermarkText || 'CronoWeb.com';
     clone.appendChild(mark);
   }

@@ -209,7 +209,7 @@ class Branding(_Base):
     mode: BrandingMode = BrandingMode.SIMPLE
     school_name: Optional[str] = Field(default=None, max_length=120)
     logo_data_url: Optional[str] = Field(default=None, max_length=2_000_000)
-    primary_color: str = Field(default="#0f766e", pattern=r"^#(?:[0-9a-fA-F]{3}){1,2}$")
+    primary_color: str = Field(default="#22375c", pattern=r"^#(?:[0-9a-fA-F]{3}){1,2}$")
     cycle_label: Optional[str] = Field(default=None, max_length=60)
     footer_note: Optional[str] = Field(default=None, max_length=160)
 
@@ -230,7 +230,7 @@ class ResolvedBranding(_Base):
     plan: str
     school_name: Optional[str] = None
     logo_data_url: Optional[str] = None
-    primary_color: str = "#0f766e"
+    primary_color: str = "#22375c"
     cycle_label: Optional[str] = None
     footer_note: Optional[str] = None
     show_logo: bool = False

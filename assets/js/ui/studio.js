@@ -131,13 +131,15 @@ function gridPreview(model) {
   const { blocks, endTime } = buildBlocks(model.time);
   const capacity = weeklyCapacity(model);
 
+  // La jornada como una franja continua en vez de una caja por bloque: se lee de
+  // un vistazo y ocupa una fracción del espacio.
   return h('div',
-    h('div.cw-preview-list',
-      blocks.map((block) => h('div', { class: `cw-preview-block${block.kind === 'break' ? ' is-break' : ''}` },
-        h('b', block.kind === 'break' ? block.label : `Clase ${block.label.replace('a', '')}`),
-        h('span', `${block.start}–${block.end}`)))),
+    h('div.cw-timeline',
+      blocks.map((block) => h('div', { class: `cw-timeline__seg${block.kind === 'break' ? ' is-break' : ''}` },
+        h('b', block.kind === 'break' ? block.label : block.label.replace('a', '')),
+        h('span', block.start)))),
     h('p.cw-hint',
-      `La jornada termina a las ${endTime}. Cada grupo tiene ${capacity} espacios ` +
+      `De ${model.time.startTime} a ${endTime}. Cada grupo tiene ${capacity} espacios ` +
       `a la semana (${model.time.classesPerDay} clases × ${model.time.days.length} días).`));
 }
 
@@ -201,7 +203,7 @@ function screenMaterias(ctx) {
         syncPlans(model);
         save(); ctx.rerender();
       }, 'cw-btn cw-btn--primary cw-btn--sm')),
-    table,
+    h('div.cw-scroll-x', table),
     h('p.cw-hint',
       'Marca «De mañana» en las materias que conviene dar temprano (Matemáticas, Español…): ' +
       'CronoWeb intentará colocarlas en los primeros bloques.'),
@@ -239,8 +241,8 @@ function screenProfesores(ctx) {
   const classBlocks = blocks.filter((b) => b.kind === 'class');
   const capacity = classBlocks.length * model.time.days.length;
 
-  const list = h('div.cw-teacher-list',
-    model.teachers.map((teacher) => teacherCard(ctx, teacher, classBlocks, capacity)));
+  const list = h('div.cw-list',
+    model.teachers.map((teacher) => teacherRow(ctx, teacher, classBlocks, capacity)));
 
   return h('div',
     sectionTitle('Profesores',
@@ -254,26 +256,32 @@ function screenProfesores(ctx) {
       : h('div.cw-empty', 'Agrega al primer profesor para continuar.'));
 }
 
-function teacherCard(ctx, teacher, classBlocks, capacity) {
+function teacherRow(ctx, teacher, classBlocks, capacity) {
   const { model, save } = ctx;
-  const body = h('div.cw-teacher-body', { hidden: !teacher._open });
+  const body = h('div.cw-row__detail', { hidden: !teacher._open });
 
   const blockedCount = teacher.blocked.length;
   const caret = h('span.cw-caret', teacher._open ? '▾' : '▸');
 
-  const summary = h('div.cw-teacher-summary',
-    h('button.cw-teacher-toggle', {
+  const item = h('div', { class: `cw-list__item${teacher._open ? ' is-open' : ''}` });
+
+  const summary = h('div.cw-row',
+    h('button.cw-row__toggle', {
       type: 'button',
       title: 'Ver u ocultar el detalle',
       onClick: () => {
         teacher._open = !teacher._open;
+        // El detalle se construye la primera vez que se abre. Con 200 profesores,
+        // pintar de entrada todas las cuadrículas serían ~8000 nodos inútiles.
+        if (teacher._open && !body.dataset.built) buildDetail();
         body.hidden = !teacher._open;
         caret.textContent = teacher._open ? '▾' : '▸';
+        item.classList.toggle('is-open', teacher._open);
       },
     }, caret),
     input('text', teacher.name, (v) => { teacher.name = v; save(); },
       { placeholder: 'Nombre del profesor', class: 'cw-teacher-name' }),
-    h('div.cw-teacher-meta',
+    h('div.cw-row__meta',
       h('span.cw-tag', `${teacher.subjectIds.length} materia(s)`),
       h('span.cw-tag', `${teacher.maxWeekly} h/semana`),
       blockedCount
@@ -286,58 +294,62 @@ function teacherCard(ctx, teacher, classBlocks, capacity) {
       save(); ctx.rerender();
     }));
 
-  // ── Materias que imparte ──────────────────────────────────────────────
-  const subjectPicker = h('div.cw-chips',
-    model.subjects.length
-      ? model.subjects.map((subject) => {
-        const on = teacher.subjectIds.includes(subject.id);
-        return h('button', {
-          type: 'button',
-          class: `cw-chip${on ? ' cw-chip--on' : ''}`,
-          style: on ? { borderColor: subject.color, color: subject.color } : null,
-          onClick: (event) => {
-            const idx = teacher.subjectIds.indexOf(subject.id);
-            if (idx >= 0) teacher.subjectIds.splice(idx, 1);
-            else teacher.subjectIds.push(subject.id);
-            save();
-            const active = teacher.subjectIds.includes(subject.id);
-            event.currentTarget.classList.toggle('cw-chip--on', active);
-            event.currentTarget.style.borderColor = active ? subject.color : '';
-            event.currentTarget.style.color = active ? subject.color : '';
-            summary.querySelector('.cw-tag').textContent = `${teacher.subjectIds.length} materia(s)`;
-          },
-        }, subject.name || 'Sin nombre');
-      })
-      : h('p.cw-hint', 'Primero captura las materias.'));
+  // ── Detalle (se construye la primera vez que se abre la fila) ─────────
+  function buildDetail() {
+    body.dataset.built = '1';
 
-  // ── Carga ─────────────────────────────────────────────────────────────
-  const loadRow = h('div.cw-form-grid.cw-form-grid--3',
-    field('Horas máximas por semana',
-      input('number', teacher.maxWeekly, (v) => { teacher.maxWeekly = v; save(); }, { min: 0, max: 80 }),
-      `El grupo completo son ${capacity} h.`),
-    field('Horas máximas por día',
-      input('number', teacher.maxDaily ?? '', (v) => { teacher.maxDaily = v || null; save(); },
-        { min: 0, max: 16, placeholder: `Sin tope (${classBlocks.length})` })),
-    field('Puede ser tutor de grupo',
-      h('div', checkbox(teacher.canBeTutor, (v) => { teacher.canBeTutor = v; save(); ctx.rerender(); },
-        'Sí, puede ser tutor'))));
+    const subjectPicker = h('div.cw-chips',
+      model.subjects.length
+        ? model.subjects.map((subject) => {
+          const on = teacher.subjectIds.includes(subject.id);
+          return h('button', {
+            type: 'button',
+            class: `cw-chip${on ? ' cw-chip--on' : ''}`,
+            style: on ? { borderColor: subject.color, color: subject.color } : null,
+            onClick: (event) => {
+              const idx = teacher.subjectIds.indexOf(subject.id);
+              if (idx >= 0) teacher.subjectIds.splice(idx, 1);
+              else teacher.subjectIds.push(subject.id);
+              save();
+              const active = teacher.subjectIds.includes(subject.id);
+              event.currentTarget.classList.toggle('cw-chip--on', active);
+              event.currentTarget.style.borderColor = active ? subject.color : '';
+              event.currentTarget.style.color = active ? subject.color : '';
+              summary.querySelector('.cw-tag').textContent = `${teacher.subjectIds.length} materia(s)`;
+            },
+          }, subject.name || 'Sin nombre');
+        })
+        : h('p.cw-hint', 'Primero captura las materias.'));
 
-  // ── Disponibilidad ────────────────────────────────────────────────────
-  const availability = availabilityGrid(ctx, teacher, classBlocks, summary);
+    const loadRow = h('div.cw-form-grid.cw-form-grid--3',
+      field('Horas máximas por semana',
+        input('number', teacher.maxWeekly, (v) => { teacher.maxWeekly = v; save(); }, { min: 0, max: 80 }),
+        `El grupo completo son ${capacity} h.`),
+      field('Horas máximas por día',
+        input('number', teacher.maxDaily ?? '', (v) => { teacher.maxDaily = v || null; save(); },
+          { min: 0, max: 16, placeholder: `Sin tope (${classBlocks.length})` })),
+      field('Puede ser tutor de grupo',
+        h('div', checkbox(teacher.canBeTutor, (v) => { teacher.canBeTutor = v; save(); ctx.rerender(); },
+          'Sí, puede ser tutor'))));
 
-  mount(body,
-    h('div.cw-subsection', h('h4', 'Materias que imparte'), subjectPicker),
-    h('div.cw-subsection', loadRow),
-    h('div.cw-subsection',
-      h('h4', 'Disponibilidad'),
-      h('p.cw-hint', 'Haz clic en las horas en que NO puede dar clase (otro trabajo, comisión, etc.).'),
-      availability),
-    h('div.cw-subsection',
-      field('Nota interna',
-        input('text', teacher.notes, (v) => { teacher.notes = v; save(); },
-          { placeholder: 'Trabaja en otra escuela los viernes' }))));
+    mount(body,
+      h('div.cw-subsection', h('h4', 'Materias que imparte'), subjectPicker),
+      h('div.cw-subsection', loadRow),
+      h('div.cw-subsection',
+        h('h4', 'Disponibilidad'),
+        h('p.cw-hint', 'Haz clic en las horas en que NO puede dar clase (otro trabajo, comisión, etc.).'),
+        availabilityGrid(ctx, teacher, classBlocks, summary)),
+      h('div.cw-subsection',
+        field('Nota interna',
+          input('text', teacher.notes, (v) => { teacher.notes = v; save(); },
+            { placeholder: 'Trabaja en otra escuela los viernes' }))));
+  }
 
-  return h('div.cw-teacher-card', summary, body);
+  if (teacher._open) buildDetail();
+
+  item.appendChild(summary);
+  item.appendChild(body);
+  return item;
 }
 
 /** Cuadrícula clicable de horas bloqueadas (días × bloques). */
@@ -409,7 +421,7 @@ function availabilityGrid(ctx, teacher, classBlocks, summary) {
   redraw();
 
   return h('div',
-    table,
+    h('div.cw-scroll-x', table),
     h('div.cw-avail-actions',
       button('Liberar todo', () => { blocked.clear(); updateSummary(); redraw(); }, 'cw-btn cw-btn--sm'),
       button('Bloquear todo', () => {
@@ -510,8 +522,8 @@ function gradeCard(ctx, grade) {
 
   refreshTotal();
 
-  return h('div.cw-grade-card',
-    h('div.cw-grade-head',
+  return h('section.cw-block',
+    h('div.cw-block__head',
       h('div.cw-grade-title',
         h('span', 'Grado'),
         input('text', grade.name, (v) => { grade.name = v; save(); },
@@ -525,7 +537,7 @@ function gradeCard(ctx, grade) {
         save(); ctx.rerender();
       })),
     h('div.cw-subsection', h('h4', 'Grupos'), groupsBox),
-    h('div.cw-subsection', h('h4', 'Plan de estudios'), planTable,
+    h('div.cw-subsection', h('h4', 'Plan de estudios'), h('div.cw-scroll-x', planTable),
       h('p.cw-hint',
         '«La da el tutor» sirve para Tutoría: la impartirá el profesor que quede como ' +
         'tutor del grupo. «Profesor fijo» obliga a que esa materia la dé una persona concreta.')));

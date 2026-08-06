@@ -190,7 +190,7 @@ escenario de ejemplo, activarlo fue la diferencia entre 197/198 h en 8 s y
   "mode": "simple",              // "simple" | "custom"
   "school_name": null,
   "logo_data_url": null,         // data:image/... (se embebe en el PNG)
-  "primary_color": "#0f766e",
+  "primary_color": "#22375c",
   "cycle_label": "Ciclo 2026-2027",
   "footer_note": null
 }

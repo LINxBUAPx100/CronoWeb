@@ -253,7 +253,7 @@ function renderResults() {
   }
 
   mount($('kpis'), renderKpis(view));
-  $('summary').hidden = false;
+  $('kpis').hidden = false;
 
   const conflicts = view.response.conflicts || [];
   const relevant = conflicts.filter((c) => c.severity !== 'info').length;
@@ -285,25 +285,29 @@ function renderResults() {
     children.push(h('div.cw-empty', 'No hay nada que mostrar en esta vista.'));
   }
   for (const target of targets) {
-    children.push(cardWrapper(view, target));
+    children.push(sheet(view, target));
   }
   mount(results, children);
 }
 
-/** Tarjeta + barra de herramientas (la barra NO entra en el PNG). */
-function cardWrapper(view, target) {
+/**
+ * Una hoja: título, botón y la tarjeta imprimible. La barra NO entra en el PNG.
+ * El marco tiene scroll propio para que en celular la hoja se desplace sin
+ * romper el ancho de la página.
+ */
+function sheet(view, target) {
   const card = renderTimetableCard(view, { type: state.viewType, id: target.id, format: state.format });
 
-  const download = h('button.cw-btn.cw-btn--sm.cw-btn--primary', { type: 'button' }, 'Descargar PNG');
+  const download = h('button.cw-btn.cw-btn--sm', { type: 'button' }, 'Descargar PNG');
   download.addEventListener('click', () => downloadCard(card, download));
 
-  return h('div.cw-card-wrap',
-    h('div.cw-card-toolbar',
+  return h('div.cw-sheet',
+    h('div.cw-sheet__bar',
       h('strong', target.label),
       h('span.cw-tag', state.format === 'alumnos' ? 'Para alumnos' : 'Técnico'),
       h('div.cw-topbar__spacer'),
       download),
-    h('div.cw-card-scroll', card));
+    h('div.cw-sheet__frame', card));
 }
 
 // --------------------------------------------------------------------------- //
@@ -408,6 +412,9 @@ function applyMode() {
   const custom = state.mode === 'custom';
   $('mode-simple').setAttribute('aria-pressed', String(!custom));
   $('mode-custom').setAttribute('aria-pressed', String(custom));
+  // Espejo en Ajustes: en celular es el único visible.
+  $('mode-simple-2').classList.toggle('is-on', !custom);
+  $('mode-custom-2').classList.toggle('is-on', custom);
   $('branding-custom-fields').hidden = !custom;
   $('branding-simple-note').hidden = custom;
   save();
@@ -528,8 +535,12 @@ function bindEvents() {
     save();
   });
 
-  $('mode-simple').addEventListener('click', () => { state.mode = 'simple'; applyMode(); });
-  $('mode-custom').addEventListener('click', requestCustomMode);
+  for (const id of ['mode-simple', 'mode-simple-2']) {
+    $(id).addEventListener('click', () => { state.mode = 'simple'; applyMode(); });
+  }
+  for (const id of ['mode-custom', 'mode-custom-2']) {
+    $(id).addEventListener('click', requestCustomMode);
+  }
   $('brand-color').addEventListener('change', (e) => { state.model.school.primaryColor = e.target.value; save(); });
   $('brand-note').addEventListener('input', (e) => { state.model.school.footerNote = e.target.value; save(); });
   $('brand-logo').addEventListener('change', (e) => readLogoFile(e.target.files?.[0]));
@@ -555,7 +566,7 @@ function hydrateSettings() {
   $('opt-engine').value = state.prefs.engine;
   $('opt-api').value = state.prefs.apiUrl;
   $('field-api').hidden = state.prefs.engine !== 'remote';
-  $('brand-color').value = state.model.school.primaryColor || '#0f766e';
+  $('brand-color').value = state.model.school.primaryColor || '#22375c';
   $('brand-note').value = state.model.school.footerNote || '';
 }
 

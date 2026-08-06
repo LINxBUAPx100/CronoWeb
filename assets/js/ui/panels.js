@@ -25,19 +25,19 @@ export function renderKpis(view) {
   if (!m) return frag;
 
   const errors = (view.response.conflicts || []).filter((c) => c.severity === 'error').length;
-  const cards = [
-    [`${m.placed_hours}/${m.required_hours}`, 'Horas colocadas'],
-    [`${Math.round(m.fill_rate * 100)} %`, 'Cobertura del plan'],
-    [String(m.teacher_gaps), 'Horas muertas de profesores'],
-    [String(errors), errors === 1 ? 'Problema por resolver' : 'Problemas por resolver'],
-    [`${(m.elapsed_ms / 1000).toFixed(2)} s`, `Cálculo · ${m.restarts} reinicio(s)`],
+  const stats = [
+    [`${m.placed_hours}/${m.required_hours}`, 'Horas colocadas', false],
+    [`${Math.round(m.fill_rate * 100)} %`, 'Cobertura del plan', false],
+    [String(m.teacher_gaps), 'Horas muertas', false],
+    [String(errors), errors === 1 ? 'Problema por resolver' : 'Problemas por resolver', errors > 0],
+    [`${(m.elapsed_ms / 1000).toFixed(2)} s`, 'Tiempo de cálculo', false],
   ];
 
-  for (const [value, label] of cards) {
-    const card = el('div', 'cw-kpi');
-    card.appendChild(el('b', null, value));
-    card.appendChild(el('span', null, label));
-    frag.appendChild(card);
+  for (const [value, label, alert] of stats) {
+    const stat = el('div', `cw-stat${alert ? ' cw-stat--alert' : ''}`);
+    stat.appendChild(el('b', null, value));
+    stat.appendChild(el('span', null, label));
+    frag.appendChild(stat);
   }
   return frag;
 }
@@ -109,7 +109,9 @@ export function renderTutorsPanel(view) {
     tbody.appendChild(row);
   }
   table.appendChild(tbody);
-  wrap.appendChild(table);
+  const scroller = el('div', 'cw-scroll-x');
+  scroller.appendChild(table);
+  wrap.appendChild(scroller);
   return wrap;
 }
 
@@ -144,7 +146,9 @@ export function renderLoadsPanel(view) {
     tbody.appendChild(row);
   }
   table.appendChild(tbody);
-  wrap.appendChild(table);
+  const scroller = el('div', 'cw-scroll-x');
+  scroller.appendChild(table);
+  wrap.appendChild(scroller);
   return wrap;
 }
 

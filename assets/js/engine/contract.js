@@ -35,7 +35,7 @@ export const DEFAULT_BRANDING = Object.freeze({
   mode: 'simple',
   school_name: null,
   logo_data_url: null,
-  primary_color: '#0f766e',
+  primary_color: '#22375c',
   cycle_label: null,
   footer_note: null,
 });
