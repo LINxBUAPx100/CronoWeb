@@ -115,6 +115,11 @@ function prepareClone(clonedDoc, marker, { watermarkRequired, watermarkText, des
   const clone = clonedDoc.querySelector(`[data-cw-export="${marker}"]`);
   if (!clone) return;
 
+  // Las marcas del modo edición son ayuda de pantalla, no parte del documento.
+  clone.classList.remove('is-editing');
+  clone.querySelectorAll('.is-editing-selected, .is-editing-target, .is-editing-swap')
+    .forEach((node) => node.classList.remove('is-editing-selected', 'is-editing-target', 'is-editing-swap'));
+
   // (3) ancho de diseño garantizado
   clone.style.maxWidth = 'none';
   if (designWidth) clone.style.width = `${designWidth}px`;

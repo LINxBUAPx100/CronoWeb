@@ -14,6 +14,9 @@ import { dirname, join } from 'node:path';
 
 import { generateSchedule } from '../assets/js/engine/index.js';
 import { resolveBranding } from '../assets/js/engine/branding.js';
+import {
+  applyMove, candidatesFor, createEditSession, isDirty, rebuildResponse, resetSession, undo,
+} from '../assets/js/model/edit.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const demo = JSON.parse(readFileSync(join(ROOT, 'backend/samples/demo_secundaria.json'), 'utf8'));
@@ -245,6 +248,117 @@ test('el motor JS y el backend producen métricas equivalentes', () => {
   // Mismo contrato ⇒ misma cantidad de horas requeridas y colocadas.
   assert(base.metrics.required_hours === 198, `required=${base.metrics.required_hours}`);
   assert(base.engine === 'js-backtracking-1.0', `engine=${base.engine}`);
+});
+
+// --------------------------------------------------------------------------- //
+// Edición manual (model/edit.js)
+// --------------------------------------------------------------------------- //
+const editRequest = clone(demo);
+const editBase = generateSchedule(editRequest, { plan: 'free' });
+
+test('cada movimiento propuesto produce un horario válido', () => {
+  // Se recorren varias clases y se aplica su PRIMER destino sugerido; tras cada
+  // movimiento el horario COMPLETO vuelve a pasar por el verificador
+  // independiente. Si la validación del editor tuviera un hueco, se cae aquí.
+  const session = createEditSession(editRequest, editBase);
+  let aplicados = 0;
+
+  for (const index of [0, 7, 19, 33, 52, 80]) {
+    if (index >= session.assignments.length) continue;
+    const options = candidatesFor(session, index);
+    if (!options.size) continue;
+    const target = [...options.values()][0];
+    const result = applyMove(session, index, target.day, target.blockId);
+    assert(result.ok, `movimiento rechazado: ${result.error}`);
+    aplicados += 1;
+    assertHardConstraints(editRequest, rebuildResponse(editRequest, editBase, session.assignments));
+  }
+  assert(aplicados >= 4, `sólo se pudieron aplicar ${aplicados} movimientos`);
+});
+
+test('el editor rechaza los movimientos que crean un cruce', () => {
+  const session = createEditSession(editRequest, editBase);
+  const source = session.assignments[0];
+  const clash = session.assignments.find(
+    (a, i) => i > 0 && a.teacher_id === source.teacher_id && a.group_id !== source.group_id,
+  );
+  assert(clash, 'el escenario debería tener un profesor con dos grupos');
+
+  const options = candidatesFor(session, 0);
+  assert(!options.has(`c|${clash.day}|${clash.block_id}`), 'se ofreció una casilla que genera cruce');
+
+  const result = applyMove(session, 0, clash.day, clash.block_id);
+  assert(!result.ok, 'se permitió un movimiento que crea un cruce');
+});
+
+test('la disponibilidad del profesor se respeta al mover', () => {
+  const session = createEditSession(editRequest, editBase);
+  // T02 no trabaja los viernes: ninguna de sus clases puede ofrecer un viernes.
+  const index = session.assignments.findIndex((a) => a.teacher_id === 'T02');
+  assert(index >= 0, 'no se encontró clase de T02');
+  for (const [, target] of candidatesFor(session, index)) {
+    assert(target.day !== 'VIE', 'se ofreció viernes a un profesor que no trabaja viernes');
+  }
+});
+
+test('mover no cambia el total de horas de ninguna materia', () => {
+  const session = createEditSession(editRequest, editBase);
+  const contar = (list) => {
+    const m = new Map();
+    for (const a of list) {
+      const k = `${a.group_id}|${a.subject_id}`;
+      m.set(k, (m.get(k) || 0) + 1);
+    }
+    return m;
+  };
+  const antes = contar(session.assignments);
+  for (const index of [3, 11, 40]) {
+    const options = candidatesFor(session, index);
+    if (options.size) {
+      const t = [...options.values()][0];
+      applyMove(session, index, t.day, t.blockId);
+    }
+  }
+  const despues = contar(session.assignments);
+  for (const [key, n] of antes) assert(despues.get(key) === n, `cambió el total de ${key}`);
+});
+
+test('deshacer y restaurar devuelven el horario original', () => {
+  const session = createEditSession(editRequest, editBase);
+  const firma = (list) => list.map((a) => `${a.group_id}${a.subject_id}${a.day}${a.block_id}`).sort().join();
+  const original = firma(session.assignments);
+
+  const target = [...candidatesFor(session, 5).values()][0];
+  assert(target, 'la clase 5 no tenía destinos');
+  applyMove(session, 5, target.day, target.blockId);
+  assert(isDirty(session), 'no se marcó como editado');
+  assert(firma(session.assignments) !== original, 'el movimiento no cambió nada');
+
+  assert(undo(session), 'deshacer falló');
+  assert(firma(session.assignments) === original, 'deshacer no restauró el horario');
+  assert(!isDirty(session), 'sigue marcado como editado tras deshacer');
+
+  applyMove(session, 5, target.day, target.blockId);
+  resetSession(session);
+  assert(firma(session.assignments) === original, 'restaurar no devolvió el original');
+});
+
+test('las métricas y los índices se recalculan tras editar', () => {
+  const session = createEditSession(editRequest, editBase);
+  const target = [...candidatesFor(session, 2).values()][0];
+  applyMove(session, 2, target.day, target.blockId);
+  const rebuilt = rebuildResponse(editRequest, editBase, session.assignments);
+
+  assert(rebuilt.assignments.length === editBase.assignments.length, 'se perdieron clases');
+  assert(Number.isFinite(rebuilt.metrics.teacher_gaps), 'las horas muertas no se recalcularon');
+  const cargaTotal = Object.values(rebuilt.metrics.teacher_load).reduce((a, l) => a + l.assigned, 0);
+  assert(cargaTotal === editBase.metrics.placed_hours, 'la suma de cargas no cuadra');
+
+  const moved = session.assignments[2];
+  assert(rebuilt.by_group[moved.group_id][moved.day][moved.block_id]?.subject_id === moved.subject_id,
+    'by_group no se reconstruyó');
+  assert(rebuilt.by_teacher[moved.teacher_id][moved.day][moved.block_id]?.group_id === moved.group_id,
+    'by_teacher no se reconstruyó');
 });
 
 console.log(results.join('\n'));

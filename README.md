@@ -95,6 +95,41 @@ con **Descargar todas**. La calidad se elige en Ajustes: 2× pantalla, 3× impre
 
 ---
 
+## Ajustar el horario a mano
+
+Ningún horario sobrevive al primer lunes. En la vista **Por grupo**, el botón
+**Editar** permite mover clases de casilla:
+
+1. Se toca una clase — se iluminan sus destinos válidos: **verde** donde la
+   casilla está libre, **ámbar** donde se intercambiaría con la clase que ya
+   está ahí.
+2. Se toca el destino y el cambio se aplica.
+3. **Deshacer** (hasta 50 pasos) y **Restaurar** vuelven atrás; `Esc` cancela la
+   selección.
+
+**Sólo se ilumina lo que es válido.** Cada destino pasa por las mismas
+restricciones duras que usó el motor —cruces, disponibilidad, carga semanal y
+diaria, tope de horas por materia al día—, así que es imposible crear un horario
+roto a mano. Lo que no se ilumina no se puede hacer, y no hace falta un mensaje
+de error después del hecho.
+
+Se puede **mover y permutar, nunca borrar ni crear**: el total de horas de cada
+materia queda intacto y el plan de estudios se sigue cumpliendo.
+
+Las métricas (horas muertas, cargas por profesor) se recalculan en cada cambio, y
+los PNG salen limpios: el exportador quita las marcas de edición del clon antes de
+rasterizar — verificado comparando los archivos byte a byte.
+
+### Otros atajos
+
+- **Otra variante** — regenera con otra semilla. Mismo plan, otro horario igual de
+  válido, por si la dirección quiere comparar opciones.
+- **Duplicar grado** — copia grupos y plan de estudios completo con el siguiente
+  número libre. Los grados de una escuela comparten casi todo.
+- **Duplicar profesor** — copia materias, carga y disponibilidad.
+
+---
+
 ## Dos motores, un solo contrato
 
 El mismo algoritmo está implementado dos veces contra el mismo JSON
@@ -195,8 +230,10 @@ assets/
     model/
       school.js              ← MODELO DE CAPTURA (lo que editan los formularios)
       serialize.js           traduce modelo ⇄ contrato del motor
+      edit.js                edición manual validada (puro, probado en Node)
     ui/
       studio.js              las cuatro pantallas de captura
+      editor.js              modo edición sobre la hoja renderizada
       dom.js                 utilidades mínimas de DOM
       timetable.js           render de horarios (4 vistas × 2 formatos)
       panels.js              tutores, cargas, avisos
@@ -241,6 +278,12 @@ Cubren: escenario completo, cruces, disponibilidad estricta (whitelist y
 blacklist), tutores 1-a-1, tutores compartidos por falta de profesores, materia sin
 profesor, plan más grande que la rejilla, horario parcial con diagnóstico, profesor
 fijo, reproducibilidad por semilla y degradación de branding por plan.
+
+La edición manual tiene su propio bloque de pruebas: **cada movimiento que el
+editor ofrece se aplica y el horario resultante vuelve a pasar por el verificador
+independiente**. Si la validación tuviera un hueco, se cae ahí. También se prueba
+que rechaza los cruces, que respeta la disponibilidad, que el total de horas por
+materia no cambia, y que deshacer y restaurar devuelven el original exacto.
 
 ---
 
@@ -306,8 +349,6 @@ para cuando haga falta.
 El contrato JSON ya está estable, así que todo esto es aditivo:
 
 - **Importar desde Excel.** Las escuelas ya tienen su plantilla en hojas de cálculo.
-- **Edición manual con validación en vivo.** Arrastrar una clase y que avise al
-  instante si genera un cruce.
 - **Exportar a PDF de varias páginas** (todos los grupos en un documento) y a Excel.
 - **Aulas y laboratorios** como recurso aparte (`room_requirement` ya está reservado
   en el contrato).

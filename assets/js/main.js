@@ -17,8 +17,10 @@ import { GatewayError, SolverGateway } from './gateway.js';
 import {
   allGroups, createEmptyModel, createGrade, createSubject, createTeacher, reviewModel, syncPlans,
 } from './model/school.js';
+import { createEditSession, isDirty, rebuildResponse, resetSession, undo } from './model/edit.js';
 import { modelToScenario, scenarioToModel } from './model/serialize.js';
 import { h, mount } from './ui/dom.js';
+import { attachEditor } from './ui/editor.js';
 import {
   renderConflictsPanel, renderKpis, renderLoadsPanel, renderStatusMessage, renderTutorsPanel,
 } from './ui/panels.js';
@@ -53,6 +55,11 @@ const state = {
   viewType: 'group',
   format: 'tecnico',
   busy: false,
+  // Edición manual: sesión de model/edit.js + qué grupo se está editando.
+  editSession: null,
+  editingGroup: null,
+  editStatus: '',
+  editorHandle: null,
 };
 
 const gateway = new SolverGateway({ mode: 'local', plan: 'free' });
@@ -176,8 +183,16 @@ function updateRailStats() {
 // --------------------------------------------------------------------------- //
 // Generación
 // --------------------------------------------------------------------------- //
-async function generate() {
+async function generate(options = {}) {
   if (state.busy) return;
+
+  if (options.newVariant) {
+    // Otra semilla = otro horario igualmente válido. Se guarda para que el
+    // resultado siga siendo reproducible si mañana se regenera.
+    state.prefs.seed = (Number(state.prefs.seed) || 12345) + 1;
+    $('opt-seed').value = state.prefs.seed;
+    save();
+  }
 
   const issues = reviewModel(state.model);
   const blocking = issues.filter((issue) => issue.level === 'error');
@@ -206,6 +221,7 @@ async function generate() {
     });
 
     state.view = createView(scenario, response);
+    discardEditing();
     goTo('resultados');
 
     const labels = {
@@ -247,6 +263,7 @@ function renderResultControls() {
 function renderResults() {
   const view = state.view;
   const results = $('results');
+  detachEditor();
   if (!view) {
     mount(results, h('div.cw-empty', 'Genera un horario para ver los resultados.'));
     return;
@@ -262,6 +279,8 @@ function renderResults() {
   const hasSchedule = (view.response.assignments || []).length > 0;
   $('btn-export-all').disabled = !hasSchedule;
   $('btn-print').disabled = !hasSchedule;
+  $('btn-variant').disabled = state.busy;
+  $('edited-tag').hidden = !(state.editSession && isDirty(state.editSession));
   $('exportbar').hidden = state.resultTab !== 'horarios';
 
   if (state.resultTab !== 'horarios') {
@@ -284,14 +303,30 @@ function renderResults() {
   if (!targets.length) {
     children.push(h('div.cw-empty', 'No hay nada que mostrar en esta vista.'));
   }
+  const cards = new Map();
   for (const target of targets) {
-    children.push(sheet(view, target));
+    const { node, card } = sheet(view, target);
+    cards.set(target.id, card);
+    children.push(node);
   }
   mount(results, children);
+
+  // El editor se engancha DESPUÉS de montar: necesita las celdas ya en el DOM.
+  if (state.editingGroup && cards.has(state.editingGroup)) {
+    state.editorHandle = attachEditor(cards.get(state.editingGroup), ensureEditSession(), {
+      groupId: state.editingGroup,
+      onChange: commitEdit,
+      onStatus: (text) => {
+        state.editStatus = text;
+        const box = $(`edit-status-${state.editingGroup}`);
+        if (box) box.textContent = text;
+      },
+    });
+  }
 }
 
 /**
- * Una hoja: título, botón y la tarjeta imprimible. La barra NO entra en el PNG.
+ * Una hoja: título, acciones y la tarjeta imprimible. La barra NO entra en el PNG.
  * El marco tiene scroll propio para que en celular la hoja se desplace sin
  * romper el ancho de la página.
  */
@@ -301,13 +336,86 @@ function sheet(view, target) {
   const download = h('button.cw-btn.cw-btn--sm', { type: 'button' }, 'Descargar PNG');
   download.addEventListener('click', () => downloadCard(card, download));
 
-  return h('div.cw-sheet',
-    h('div.cw-sheet__bar',
-      h('strong', target.label),
-      h('span.cw-tag', state.format === 'alumnos' ? 'Para alumnos' : 'Técnico'),
-      h('div.cw-topbar__spacer'),
-      download),
-    h('div.cw-sheet__frame', card));
+  const bar = h('div.cw-sheet__bar',
+    h('strong', target.label),
+    h('span.cw-tag', state.format === 'alumnos' ? 'Para alumnos' : 'Técnico'),
+    h('div.cw-topbar__spacer'));
+
+  // Editar sólo tiene sentido por grupo: es la rejilla donde una casilla equivale
+  // a una decisión («esta clase, a esta hora»).
+  if (state.viewType === 'group') {
+    const editing = state.editingGroup === target.id;
+    if (editing) {
+      const session = ensureEditSession();
+      bar.appendChild(h('button.cw-btn.cw-btn--sm', {
+        type: 'button',
+        disabled: !session.history.length,
+        onClick: () => { if (undo(session)) commitEdit('Se deshizo el último cambio.'); },
+      }, 'Deshacer'));
+      bar.appendChild(h('button.cw-btn.cw-btn--sm', {
+        type: 'button',
+        disabled: !isDirty(session),
+        onClick: () => { resetSession(session); commitEdit('Se restauró el horario generado.'); },
+      }, 'Restaurar'));
+    }
+    bar.appendChild(h('button', {
+      type: 'button',
+      class: `cw-btn cw-btn--sm${editing ? ' cw-btn--primary' : ''}`,
+      onClick: () => {
+        detachEditor();
+        state.editingGroup = editing ? null : target.id;
+        renderResults();
+      },
+    }, editing ? 'Terminar edición' : 'Editar'));
+  }
+  bar.appendChild(download);
+
+  const parts = [bar];
+  if (state.editingGroup === target.id) {
+    parts.push(h('div.cw-edit-hint', { id: `edit-status-${target.id}` }, state.editStatus || 'Toca una clase para moverla.'));
+  }
+  parts.push(h('div.cw-sheet__frame', card));
+  return { node: h('div.cw-sheet', parts), card };
+}
+
+// --------------------------------------------------------------------------- //
+// Edición manual
+// --------------------------------------------------------------------------- //
+function ensureEditSession() {
+  if (!state.editSession) {
+    state.editSession = createEditSession(state.view.request, state.view.response);
+  }
+  return state.editSession;
+}
+
+function detachEditor() {
+  if (state.editorHandle) {
+    state.editorHandle.destroy();
+    state.editorHandle = null;
+  }
+}
+
+/** Vuelca las asignaciones editadas al resultado y redibuja. */
+function commitEdit(message) {
+  const session = ensureEditSession();
+  detachEditor();
+  const rebuilt = rebuildResponse(state.view.request, state.view.response, session.assignments);
+  state.view = createView(state.view.request, rebuilt);
+  if (message) state.editStatus = message;
+  renderResults();
+  setStatus(
+    isDirty(session)
+      ? `Horario editado a mano · ${session.moves} cambio(s)`
+      : 'Horario tal como lo generó CronoWeb',
+    isDirty(session) ? 'warn' : 'ok',
+  );
+}
+
+function discardEditing() {
+  detachEditor();
+  state.editSession = null;
+  state.editingGroup = null;
+  state.editStatus = '';
 }
 
 // --------------------------------------------------------------------------- //
@@ -484,7 +592,8 @@ function seedNewModel() {
 // Eventos
 // --------------------------------------------------------------------------- //
 function bindEvents() {
-  $('btn-generate').addEventListener('click', generate);
+  $('btn-generate').addEventListener('click', () => generate());
+  $('btn-variant').addEventListener('click', () => generate({ newVariant: true }));
 
   $('btn-prev').addEventListener('click', () => {
     const i = SCREENS.findIndex((s) => s.id === state.screen);

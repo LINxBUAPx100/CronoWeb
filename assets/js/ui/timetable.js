@@ -242,7 +242,13 @@ function renderTable(view, cellFor, { format, columns = null }) {
       for (const column of columns || [null]) {
         const raw = cellFor(day, block.id, column);
         const cells = raw == null ? [] : (Array.isArray(raw) ? raw : [raw]);
-        row.appendChild(renderCell(view, cells, format));
+        const td = renderCell(view, cells, format);
+        // Coordenadas en el DOM: es lo que permite al editor manual saber en qué
+        // casilla se hizo clic sin volver a construir la tabla.
+        td.dataset.day = day;
+        td.dataset.block = block.id;
+        if (column) td.dataset.column = column.key;
+        row.appendChild(td);
       }
     }
     tbody.appendChild(row);

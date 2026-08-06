@@ -13,7 +13,7 @@
 
 import {
   allGroups, buildBlocks, createGrade, createSubject, createTeacher, DAY_PRESETS,
-  PALETTE, removeSubject, removeTeacher, syncPlans, weeklyCapacity,
+  nextId, PALETTE, removeSubject, removeTeacher, syncPlans, weeklyCapacity,
 } from '../model/school.js';
 import { abbreviate, shortDay } from '../model/serialize.js';
 import { button, checkbox, clear, field, h, iconButton, input, mount, select } from './dom.js';
@@ -288,6 +288,14 @@ function teacherRow(ctx, teacher, classBlocks, capacity) {
         ? h('span.cw-tag.cw-tag--shared', `${blockedCount} h bloqueadas`)
         : h('span.cw-tag', 'sin restricciones'),
       teacher.canBeTutor ? null : h('span.cw-tag', 'no tutor')),
+    button('Duplicar', () => {
+      const copy = JSON.parse(JSON.stringify(teacher));
+      copy.id = nextId('T', model.teachers);
+      copy.name = `${teacher.name || 'Profesor'} (copia)`;
+      copy._open = false;
+      model.teachers.splice(model.teachers.indexOf(teacher) + 1, 0, copy);
+      save(); ctx.rerender();
+    }, 'cw-btn cw-btn--sm'),
     iconButton('✕', `Eliminar ${teacher.name || 'profesor'}`, () => {
       if (!confirm(`¿Eliminar a ${teacher.name || 'este profesor'}?`)) return;
       removeTeacher(model, teacher.id);
@@ -531,6 +539,18 @@ function gradeCard(ctx, grade) {
       select([['matutino', 'Matutino'], ['vespertino', 'Vespertino'], ['', 'Sin turno']],
         grade.shift, (v) => { grade.shift = v; save(); }, { class: 'cw-mid' }),
       totalTag,
+      // Los grados de una escuela suelen compartir casi todo el plan: duplicar y
+      // ajustar es mucho más rápido que capturar 11 materias otra vez.
+      button('Duplicar', () => {
+        const copy = JSON.parse(JSON.stringify(grade));
+        copy.id = nextId('G', model.grades);
+        const used = new Set(model.grades.map((g) => g.name));
+        let n = Number(grade.name);
+        copy.name = Number.isFinite(n) ? String(++n) : `${grade.name} (copia)`;
+        while (used.has(copy.name)) copy.name = Number.isFinite(n) ? String(++n) : `${copy.name}+`;
+        model.grades.splice(model.grades.indexOf(grade) + 1, 0, copy);
+        save(); ctx.rerender();
+      }, 'cw-btn cw-btn--sm'),
       iconButton('✕', 'Eliminar grado', () => {
         if (!confirm(`¿Eliminar el grado ${grade.name} y sus ${grade.groups.length} grupo(s)?`)) return;
         model.grades = model.grades.filter((g) => g.id !== grade.id);

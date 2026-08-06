@@ -283,7 +283,10 @@ Regla dura: nada anima `width`, `height`, `top`, `left` ni `filter`.
    sólo etiquetas y elementos no textuales.
 8. **No** más de dos pesos por familia en la misma pantalla.
 9. **No** emoji como iconografía.
-10. **No** animaciones con `fill-mode: both` que arranquen en `opacity: 0` sobre
+10. **No** `::before`/`::after` decorativos dentro de `.cw-card`: html2canvas los
+    materializa como nodos reales durante el clonado, **antes** del hook que
+    limpia el clon, así que terminan impresos en el PNG.
+11. **No** animaciones con `fill-mode: both` que arranquen en `opacity: 0` sobre
     nodos exportables: html2canvas clona el DOM, la animación reinicia y el PNG
     sale en blanco. El exportador congela animaciones en el clon, pero la regla
     sigue en pie.
