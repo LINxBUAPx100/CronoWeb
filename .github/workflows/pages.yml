@@ -8,8 +8,16 @@
 #
 # Requiere una vez: Settings → Pages → Source: **GitHub Actions**.
 #
+# UN SOLO JOB a propósito. Con dos (verificar → publicar) hay que arrancar dos
+# runners y resolver el doble de acciones desde el CDN de GitHub; cuando ese CDN
+# falla —«Failed to resolve action download info: Service Unavailable»— el
+# despliegue se cae por algo que no tiene nada que ver con el código. Menos
+# pasos = menos superficie para una incidencia del servicio, y la mitad de
+# tiempo. Si aun así falla con «Service Unavailable», es de GitHub: basta con
+# «Re-run jobs».
+#
 # CronoWeb no tiene build: el sitio ES el repositorio (HTML + ES modules + CSS +
-# fuentes y html2canvas vendorizados). El workflow sólo verifica y sube.
+# fuentes y html2canvas versionados).
 
 name: Desplegar en GitHub Pages
 
@@ -23,43 +31,30 @@ permissions:
   pages: write
   id-token: write
 
-# Un despliegue a la vez; no se cancela el que está en curso.
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  verificar:
-    name: Verificar el motor
+  desplegar:
+    name: Verificar y publicar
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      # Las mismas pruebas que corren en local: si el motor se rompe, no se
-      # publica. Incluye el verificador independiente de restricciones duras.
-      - name: Pruebas del motor y del editor
-        run: node tools/verify-engine.mjs
-
-  publicar:
-    name: Publicar
-    needs: verificar
-    runs-on: ubuntu-latest
+    timeout-minutes: 10
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
-      # Cinturón y tirantes: .nojekyll ya está versionado, pero si alguien lo
-      # borra el sitio dejaría de servir cualquier carpeta que empiece con "_".
-      - name: Garantizar .nojekyll
-        run: touch .nojekyll
+      # Node ya viene instalado en el runner de Ubuntu; usarlo directo evita
+      # una acción más que resolver.
+      - name: Pruebas del motor y del editor
+        run: node tools/verify-engine.mjs
 
       - name: Comprobar que están los archivos que el sitio necesita
         run: |
           set -e
+          touch .nojekyll   # si alguien lo borra, Pages ignoraría carpetas con "_"
           for f in index.html assets/css/app.css assets/js/main.js \
                    assets/vendor/html2canvas.min.js \
                    backend/samples/demo_secundaria.json; do

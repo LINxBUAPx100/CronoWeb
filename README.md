@@ -66,7 +66,25 @@ Nadie en la escuela ve JSON ni toca archivos. La captura son formularios:
 | **1 · Horario** | Nombre de la escuela, ciclo, días de clase, hora de inicio, duración de cada clase (estándar 60 min), número de clases al día y recesos. Las horas de cada bloque **se calculan solas** y se muestran en vivo. |
 | **2 · Materias** | Nombre, abreviatura (lo que se ve en la celda), color —con paleta de un clic— y si conviene darla temprano. Botón para cargar de golpe las materias comunes de secundaria. |
 | **3 · Profesores** | Materias que imparte (chips de un clic), horas máximas por semana y por día, si puede ser tutor, y una **cuadrícula de disponibilidad**: se hace clic en las horas en que NO puede dar clase. Hay atajos para bloquear un día entero o una hora de toda la semana. |
-| **4 · Grados y grupos** | Cada grado con sus grupos (A, B, C…) y su plan de estudios: horas por semana, máximo por día, si la imparte el tutor y si tiene profesor fijo. Un contador marca en verde o rojo si el plan cabe en la semana. |
+| **4 · Grados y grupos** | Nivel del grado (kínder / primaria / secundaria / preparatoria), sus grupos (A, B, C…) y su plan de estudios: horas por semana, máximo por día, si la imparte el tutor y si tiene profesor fijo. Un contador marca en verde o rojo si el plan cabe en la semana. |
+
+### Niveles y periodos
+
+**Un plantel puede tener varios niveles.** Cada grado se marca como kínder,
+primaria, secundaria o preparatoria; los grados se agrupan por nivel en la
+captura y en las hojas («1° de primaria»). Cuando conviven dos niveles, los ids
+internos de grupo llevan prefijo (`P1A`, `S1A`) — si no, el «1° A» de primaria y
+el de secundaria serían el mismo grupo para el motor y el horario saldría
+revuelto. Con un solo nivel el id sigue siendo `1A`, que es lo que la escuela
+escribe.
+
+**Cada escuela elige su sistema de periodos:** anual, semestres, cuatrimestres o
+bimestres. Si no es anual, **cada periodo guarda su propio plan de estudios y
+genera su propio horario**: en el 1er semestre pueden llevar Química y en el 2°
+Física. Al abrir un periodo nuevo se copia el plan del anterior (cambiar dos
+materias no debería obligar a recapturar once), y el periodo aparece en la hoja
+impresa y en el nombre del archivo, así que descargar dos semestres en la misma
+carpeta no sobrescribe nada.
 
 El botón **Generar horario** revisa antes de calcular: si falta algo, salta al paso
 donde está el problema y lo explica —«Nadie imparte Inglés y el grado 1 la lleva

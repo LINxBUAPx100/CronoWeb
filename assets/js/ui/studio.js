@@ -13,7 +13,8 @@
 
 import {
   allGroups, buildBlocks, createGrade, createSubject, createTeacher, DAY_PRESETS,
-  nextId, PALETTE, removeSubject, removeTeacher, syncPlans, weeklyCapacity,
+  currentTerm, hasMixedLevels, LEVELS, levelOf, nextId, PALETTE, planOf, removeSubject,
+  removeTeacher, syncPlans, termCount, termLabel, termSystemOf, TERM_SYSTEMS, weeklyCapacity,
 } from '../model/school.js';
 import { abbreviate, shortDay } from '../model/serialize.js';
 import { button, checkbox, clear, field, h, iconButton, input, mount, select } from './dom.js';
@@ -453,9 +454,87 @@ function screenGrupos(ctx) {
         model.grades.push(grade);
         save(); ctx.rerender();
       }, 'cw-btn cw-btn--primary cw-btn--sm')),
+    termBar(ctx),
     model.grades.length
-      ? model.grades.map((grade) => gradeCard(ctx, grade))
+      ? gradesByLevel(ctx)
       : h('div.cw-empty', 'Agrega el primer grado (1°, 2°, 3°…).'));
+}
+
+/**
+ * Barra de periodos.
+ *
+ * Una primaria trabaja todo el año con el mismo horario y no necesita ver nada
+ * de esto; una prepa cambia de materias cada semestre. Por eso el sistema se
+ * elige una vez y las pestañas de periodo sólo aparecen cuando hay más de uno.
+ */
+function termBar(ctx) {
+  const { model, save } = ctx;
+  const sistema = termSystemOf(model);
+  const total = termCount(model);
+
+  const selector = h('div.cw-inline-field',
+    h('span', 'Periodos del ciclo'),
+    h('div.cw-seg',
+      TERM_SYSTEMS.map((t) => h('button', {
+        type: 'button',
+        class: `cw-seg__btn${sistema.id === t.id ? ' is-on' : ''}`,
+        title: t.count === 1 ? 'Un solo horario para todo el ciclo'
+          : `${t.count} periodos, cada uno con su propio plan de estudios`,
+        onClick: () => {
+          model.terms = { system: t.id, current: 1 };
+          save(); ctx.rerender();
+        },
+      }, t.label))));
+
+  if (total === 1) return h('div.cw-termbar', selector);
+
+  const pestañas = h('div.cw-inline-field',
+    h('span', 'Editando'),
+    h('div.cw-seg',
+      Array.from({ length: total }, (_, i) => i + 1).map((n) => h('button', {
+        type: 'button',
+        class: `cw-seg__btn${currentTerm(model) === n ? ' is-on' : ''}`,
+        onClick: () => { model.terms.current = n; save(); ctx.rerender(); },
+      }, termLabel(model, n)))));
+
+  const actual = currentTerm(model);
+  const copiar = actual > 1 && button(`Copiar del ${termLabel(model, actual - 1)}`, () => {
+    if (!confirm(`¿Reemplazar el plan de estudios de todos los grados con el del ${
+      termLabel(model, actual - 1)}?`)) return;
+    for (const grade of model.grades) {
+      grade.plans[actual] = planOf(model, grade, actual - 1).map((e) => ({ ...e }));
+    }
+    save(); ctx.rerender();
+  }, 'cw-btn cw-btn--sm');
+
+  return h('div.cw-termbar',
+    selector,
+    pestañas,
+    copiar || null,
+    h('p.cw-hint',
+      `Cada periodo guarda su propio plan de estudios y genera su propio horario. ` +
+      `Estás editando el ${termLabel(model).toLowerCase()}.`));
+}
+
+/**
+ * Los grados se agrupan bajo su nivel cuando la escuela tiene más de uno; con un
+ * solo nivel el encabezado sobra y no se dibuja.
+ */
+function gradesByLevel(ctx) {
+  const { model } = ctx;
+  if (!hasMixedLevels(model)) return model.grades.map((grade) => gradeCard(ctx, grade));
+
+  const salida = [];
+  for (const nivel of LEVELS) {
+    const grados = model.grades.filter((g) => levelOf(g).id === nivel.id);
+    if (!grados.length) continue;
+    salida.push(h('h4.cw-level-head',
+      nivel.label,
+      h('span.cw-tag', `${grados.length} grado(s) · ${
+        grados.reduce((n, g) => n + g.groups.length, 0)} grupo(s)`)));
+    salida.push(...grados.map((grade) => gradeCard(ctx, grade)));
+  }
+  return salida;
 }
 
 function gradeCard(ctx, grade) {
@@ -464,7 +543,7 @@ function gradeCard(ctx, grade) {
   const totalTag = h('span.cw-tag');
 
   const refreshTotal = () => {
-    const total = grade.plan.reduce((acc, entry) => acc + (Number(entry.hours) || 0), 0);
+    const total = planOf(model, grade).reduce((acc, entry) => acc + (Number(entry.hours) || 0), 0);
     totalTag.textContent = `${total} de ${capacity} h`;
     totalTag.className = total > capacity ? 'cw-tag cw-tag--danger'
       : total === 0 ? 'cw-tag' : 'cw-tag cw-tag--ok';
@@ -493,7 +572,7 @@ function gradeCard(ctx, grade) {
 
   // ── Plan de estudios ──────────────────────────────────────────────────
   const planRows = model.subjects.map((subject) => {
-    const entry = grade.plan.find((e) => e.subjectId === subject.id);
+    const entry = planOf(model, grade).find((e) => e.subjectId === subject.id);
     return h('tr',
       h('td',
         h('span.cw-swatch.cw-swatch--sm', { style: { backgroundColor: subject.color } }),
@@ -536,6 +615,15 @@ function gradeCard(ctx, grade) {
         h('span', 'Grado'),
         input('text', grade.name, (v) => { grade.name = v; save(); },
           { class: 'cw-grade-input', placeholder: '1' })),
+      // El nivel es parte de la identidad del grupo, no un adorno: si la escuela
+      // tiene primaria y secundaria, «1° A» existe dos veces.
+      h('div.cw-seg.cw-seg--level',
+        LEVELS.map((nivel) => h('button', {
+          type: 'button',
+          class: `cw-seg__btn${levelOf(grade).id === nivel.id ? ' is-on' : ''}`,
+          title: `${nivel.label} — normalmente ${nivel.grades} grados`,
+          onClick: () => { grade.level = nivel.id; save(); ctx.rerender(); },
+        }, nivel.label))),
       select([['matutino', 'Matutino'], ['vespertino', 'Vespertino'], ['', 'Sin turno']],
         grade.shift, (v) => { grade.shift = v; save(); }, { class: 'cw-mid' }),
       totalTag,
@@ -566,10 +654,18 @@ function gradeCard(ctx, grade) {
 /** Resumen para la barra lateral. */
 export function modelSummary(model) {
   const groups = allGroups(model).length;
+  const porNivel = LEVELS
+    .map((n) => ({ n, k: model.grades.filter((g) => levelOf(g).id === n.id).length }))
+    .filter((x) => x.k > 0);
   const hours = model.grades.reduce((acc, grade) => {
-    const perGroup = grade.plan.reduce((sum, entry) => sum + (Number(entry.hours) || 0), 0);
+    const perGroup = planOf(model, grade).reduce((sum, entry) => sum + (Number(entry.hours) || 0), 0);
     return acc + perGroup * grade.groups.length;
   }, 0);
   const capacity = model.teachers.reduce((acc, t) => acc + (Number(t.maxWeekly) || 0), 0);
-  return { groups, hours, capacity, subjects: model.subjects.length, teachers: model.teachers.length };
+  return {
+    groups, hours, capacity,
+    subjects: model.subjects.length,
+    teachers: model.teachers.length,
+    levels: porNivel.map((x) => x.n.short).join(' · '),
+  };
 }

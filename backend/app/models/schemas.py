@@ -155,6 +155,10 @@ class Group(_Base):
     id: str = Field(min_length=1, max_length=24)
     grade: str = Field(min_length=1, max_length=24)
     name: str = Field(min_length=1, max_length=24)
+    # Nivel educativo ("primaria" | "secundaria" | "preparatoria"). Opcional y
+    # libre a propósito: el solver no lo usa, pero viaja para las etiquetas y
+    # para distinguir el 1°A de primaria del 1°A de secundaria.
+    level: Optional[str] = Field(default=None, max_length=24)
     shift: Optional[str] = Field(default=None, max_length=24)
     blocked_slots: List[SlotRef] = Field(default_factory=list)
     curriculum: List[CurriculumEntry] = Field(default_factory=list)

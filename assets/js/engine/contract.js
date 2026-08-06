@@ -165,6 +165,9 @@ export function normalizeRequest(raw) {
       id,
       grade: str(g?.grade, id),
       name: str(g?.name, ''),
+      // Nivel educativo: informativo para el motor, decisivo para las etiquetas
+      // y para que «1A» de primaria y «1A» de secundaria no se confundan.
+      level: str(g?.level),
       shift: str(g?.shift),
       blocked_slots: asArray(g?.blocked_slots)
         .map((b) => ({ day: str(b?.day, ''), block_id: str(b?.block_id, '') }))

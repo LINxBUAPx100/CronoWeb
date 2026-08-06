@@ -62,6 +62,7 @@ implementar exactamente este contrato. Si cambias uno, cambia el otro.
       "id": "1A",
       "grade": "1",                  // Z
       "name": "A",                   // W
+      "level": "secundaria",         // opcional · "primaria" | "secundaria" | "preparatoria"
       "shift": "matutino",           // opcional, informativo
       "blocked_slots": [{ "day": "VIE", "block_id": "B7" }],   // el grupo no recibe clase ahí
       "curriculum": [

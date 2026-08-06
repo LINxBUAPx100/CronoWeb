@@ -382,6 +382,23 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--brand); 
 .cw-avail.is-blocked:hover { background: #f9e2dd; }
 .cw-avail-actions { display: flex; gap: 6px; margin-top: 10px; }
 
+.cw-termbar {
+  display: flex; align-items: center; gap: 14px 20px; flex-wrap: wrap;
+  padding: 14px 16px; margin-bottom: 22px;
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-md);
+}
+.cw-termbar .cw-hint { width: 100%; margin: 0; }
+
+/* Nivel educativo: el selector va en el encabezado del grado y los grados se
+   agrupan bajo su nivel cuando la escuela tiene más de uno. */
+.cw-seg--level { flex-wrap: wrap; }
+.cw-level-head {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 11px; text-transform: uppercase; letter-spacing: .1em; font-weight: 700;
+  color: var(--ink-3); margin: 30px 0 2px;
+}
+.cw-level-head:first-child { margin-top: 6px; }
+
 .cw-block { padding: 22px 0; border-bottom: 1px solid var(--line); }
 .cw-block:first-of-type { border-top: 1px solid var(--line); }
 .cw-block__head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }

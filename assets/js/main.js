@@ -15,7 +15,8 @@ import { planFeatures } from './engine/branding.js';
 import { exportNodeAsPng, exportNodesAsPng } from './export/png.js';
 import { GatewayError, SolverGateway } from './gateway.js';
 import {
-  allGroups, createEmptyModel, createGrade, createSubject, createTeacher, reviewModel, syncPlans,
+  allGroups, createEmptyModel, createGrade, createSubject, createTeacher, migrateModel,
+  reviewModel, syncPlans, termCount, termLabel,
 } from './model/school.js';
 import { createEditSession, isDirty, rebuildResponse, resetSession, undo } from './model/edit.js';
 import { modelToScenario, scenarioToModel } from './model/serialize.js';
@@ -81,7 +82,9 @@ function restore() {
     }
     const model = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
     if (model?.subjects) {
-      state.model = model;
+      // Los modelos guardados antes de los periodos traen grade.plan; migrateModel
+      // los convierte a grade.plans sin que la escuela pierda nada.
+      state.model = migrateModel(model);
       syncPlans(state.model);
       return true;
     }
@@ -175,6 +178,7 @@ function renderReview() {
 function updateRailStats() {
   const s = modelSummary(state.model);
   mount($('rail-stats'),
+    s.levels && h('div', h('b', s.levels)),
     h('div', h('b', String(s.groups)), ' grupos'),
     h('div', h('b', String(s.teachers)), ' profesores'),
     h('div', h('b', `${s.hours} h`), ' por semana'));
@@ -332,6 +336,12 @@ function renderResults() {
  */
 function sheet(view, target) {
   const card = renderTimetableCard(view, { type: state.viewType, id: target.id, format: state.format });
+  // El periodo entra en el nombre del archivo: descargar los horarios de dos
+  // semestres en la misma carpeta no debe sobrescribir nada.
+  if (termCount(state.model) > 1) {
+    card.dataset.exportName = `${card.dataset.exportName}-${
+      termLabel(state.model).replace(/[^0-9a-zA-Záéíóú]+/g, '-').toLowerCase()}`;
+  }
 
   const download = h('button.cw-btn.cw-btn--sm', { type: 'button' }, 'Descargar PNG');
   download.addEventListener('click', () => downloadCard(card, download));

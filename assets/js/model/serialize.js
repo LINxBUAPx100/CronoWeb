@@ -12,7 +12,8 @@
  */
 
 import {
-  buildBlocks, createEmptyModel, DAY_PRESETS, groupIdOf, PALETTE,
+  allGroups, buildBlocks, createEmptyModel, currentTerm, DAY_PRESETS, LEVELS, levelOf,
+  migrateModel, PALETTE, planOf, termCount, termLabel, TERM_SYSTEMS,
 } from './school.js';
 
 /** Etiqueta corta de día para los encabezados de tabla ("Lunes" → "LUN"). */
@@ -55,9 +56,15 @@ export function modelToScenario(model, opts = {}) {
 
   // El plan se captura por GRADO y aquí se expande a cada uno de sus grupos:
   // es la forma en que las escuelas piensan el plan de estudios.
+  //
+  // Los ids salen de allGroups() y no se calculan aquí: es la única función que
+  // sabe si la escuela mezcla niveles y por tanto si «1A» necesita prefijo.
+  const idPorGrupo = new Map(
+    allGroups(model).map((g) => [`${g.grade.id}|${g.group.name}`, g.id]),
+  );
   const groups = [];
   for (const grade of model.grades) {
-    const curriculum = grade.plan
+    const curriculum = planOf(model, grade)
       .filter((entry) => Number(entry.hours) > 0)
       .map((entry) => ({
         subject_id: entry.subjectId,
@@ -70,9 +77,10 @@ export function modelToScenario(model, opts = {}) {
 
     for (const group of grade.groups) {
       groups.push({
-        id: groupIdOf(grade, group),
+        id: idPorGrupo.get(`${grade.id}|${group.name}`),
         grade: grade.name,
         name: group.name,
+        level: levelOf(grade).id,
         shift: grade.shift || null,
         blocked_slots: group.blockedSlots || [],
         curriculum: curriculum.map((entry) => ({ ...entry })),
@@ -102,7 +110,8 @@ export function modelToScenario(model, opts = {}) {
       school_name: custom ? (model.school.name || null) : null,
       logo_data_url: custom ? (model.school.logo || null) : null,
       primary_color: custom ? (model.school.primaryColor || '#22375c') : '#22375c',
-      cycle_label: model.school.cycle || null,
+      cycle_label: [model.school.cycle, termCount(model) > 1 ? termLabel(model) : null]
+        .filter(Boolean).join(' · ') || null,
       footer_note: custom ? (model.school.footerNote || null) : null,
     },
   };
@@ -213,12 +222,13 @@ export function scenarioToModel(scenario) {
   // del primer grupo de cada grado (en el contrato es idéntico para todos).
   const byGrade = new Map();
   for (const group of scenario?.groups || []) {
-    const key = group.grade ?? group.id;
+    const key = `${group.level || 'secundaria'}|${group.grade ?? group.id}`;
     if (!byGrade.has(key)) byGrade.set(key, []);
     byGrade.get(key).push(group);
   }
 
-  model.grades = [...byGrade.entries()].map(([gradeName, groupList], i) => {
+  model.grades = [...byGrade.entries()].map(([clave, groupList], i) => {
+    const gradeName = clave.slice(clave.indexOf('|') + 1);
     const first = groupList[0];
     const planned = new Map((first.curriculum || []).map((c) => [c.subject_id, c]));
 
@@ -233,9 +243,12 @@ export function scenarioToModel(scenario) {
     return {
       id: `G${i + 1}`,
       name: String(gradeName),
+      level: LEVELS.some((l) => l.id === first.level) ? first.level : 'secundaria',
       shift: first.shift || 'matutino',
+      // Un escenario del contrato es la foto de UN periodo: al reabrirlo entra
+      // como periodo 1 y desde ahí se pueden crear los demás.
       groups: groupList.map((g) => ({ name: g.name || g.id, blockedSlots: g.blocked_slots || [] })),
-      plan: model.subjects.map((subject) => {
+      plans: { 1: model.subjects.map((subject) => {
         const entry = planned.get(subject.id);
         return {
           subjectId: subject.id,
@@ -245,7 +258,7 @@ export function scenarioToModel(scenario) {
           preferredTeacherId: entry?.preferred_teacher_id || null,
           fixedTeacherId: entry?.fixed_teacher_id || null,
         };
-      }),
+      }) },
     };
   });
 

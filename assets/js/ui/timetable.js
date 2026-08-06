@@ -59,6 +59,13 @@ export const rgba = (hex, alpha) => {
 };
 
 export const groupLabel = (group) => `${group.grade}${group.name}`;
+
+/** Nivel educativo, si el escenario lo trae. */
+const LEVEL_LABEL = {
+  kinder: 'Kínder', primaria: 'Primaria', secundaria: 'Secundaria', preparatoria: 'Preparatoria',
+};
+const levelLabelOf = (group) => LEVEL_LABEL[group?.level] || null;
+const gradeKeyOf = (group) => `${group.level || ''}|${group.grade}`;
 const subjectShort = (subject) => subject.short_name || subject.name.slice(0, 6);
 const slug = (text) => String(text).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   .replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
@@ -70,10 +77,13 @@ export function createView(request, response) {
     subjects.set(subject.id, { ...subject, color: subject.color || PALETTE[i % PALETTE.length] });
   });
 
+  // Un «1°» de primaria y un «1°» de secundaria son grados distintos: la clave
+  // lleva el nivel, o los dos horarios se mezclarían en la misma hoja.
   const grades = new Map();
   for (const group of request.groups) {
-    if (!grades.has(group.grade)) grades.set(group.grade, []);
-    grades.get(group.grade).push(group);
+    const key = gradeKeyOf(group);
+    if (!grades.has(key)) grades.set(key, []);
+    grades.get(key).push(group);
   }
 
   return {
@@ -365,8 +375,9 @@ function buildGroupCard(view, groupId, format) {
       // En el cartel del salón el grupo se lee como lo dice la escuela: «1° A».
       title: format === 'alumnos' ? `${group.grade}° ${group.name}` : `Horario ${groupLabel(group)}`,
       subtitle: format === 'alumnos'
-        ? [view.branding.cycle_label, tutorName && `Tutor: ${tutorName}`].filter(Boolean).join(' · ')
-        : [view.branding.cycle_label, group.shift && `Turno ${group.shift}`,
+        ? [levelLabelOf(group), view.branding.cycle_label, tutorName && `Tutor: ${tutorName}`]
+          .filter(Boolean).join(' · ')
+        : [levelLabelOf(group), view.branding.cycle_label, group.shift && `Turno ${group.shift}`,
           `${placed} de ${total} h semanales`].filter(Boolean).join(' · '),
       aside: tutorName ? [['Tutor del grupo', tutorName]] : null,
     },
@@ -380,9 +391,14 @@ function buildTeacherCard(view, teacherId, format) {
   const load = view.response.metrics?.teacher_load?.[teacherId];
   const used = new Set();
 
+  const mezcla = new Set([...view.groups.values()].map((g) => g.level || '')).size > 1;
   const tutorOf = (view.response.tutors || [])
     .filter((t) => t.teacher_id === teacherId)
-    .map((t) => groupLabel(view.groups.get(t.group_id)));
+    .map((t) => {
+      const g = view.groups.get(t.group_id);
+      const nivel = levelLabelOf(g);
+      return mezcla && nivel ? `${groupLabel(g)} (${nivel.toLowerCase()})` : groupLabel(g);
+    });
 
   const table = renderTable(view, (day, blockId) => {
     const cell = matrix[day]?.[blockId];
@@ -415,9 +431,11 @@ function buildTeacherCard(view, teacherId, format) {
 }
 
 // ── Grado (todos sus grupos en una sola hoja) ─────────────────────────────── //
-function buildGradeCard(view, gradeName, format) {
-  const groups = (view.grades.get(gradeName) || []).slice()
+function buildGradeCard(view, gradeKey, format) {
+  const groups = (view.grades.get(gradeKey) || []).slice()
     .sort((a, b) => (a.name < b.name ? -1 : 1));
+  const gradeName = groups[0]?.grade ?? gradeKey.slice(gradeKey.indexOf('|') + 1);
+  const nivel = levelLabelOf(groups[0]);
   const columns = groups.map((group) => ({ key: group.id, label: group.name }));
   const used = new Set();
 
@@ -446,11 +464,11 @@ function buildGradeCard(view, gradeName, format) {
     .filter(Boolean);
 
   return {
-    filename: `horario-grado-${slug(gradeName)}-${format}`,
+    filename: `horario-${slug(nivel || 'grado')}-${slug(gradeName)}-${format}`,
     legend: [...used],
     table,
     head: {
-      title: `${gradeName}° grado`,
+      title: nivel ? `${gradeName}° de ${nivel.toLowerCase()}` : `${gradeName}° grado`,
       subtitle: [view.branding.cycle_label, `${groups.length} grupo(s)`,
         tutors.length ? `Tutores — ${tutors.join(' · ')}` : null].filter(Boolean).join(' · '),
       aside: [['Grupos', String(groups.length)]],
@@ -504,7 +522,19 @@ export function listTargets(view, type) {
       .map((t) => ({ id: t.id, label: t.name }));
   }
   if (type === 'grade') {
-    return [...view.grades.keys()].sort().map((grade) => ({ id: grade, label: `Grado ${grade}` }));
+    // Orden natural: primaria → secundaria → prepa, y dentro, por número.
+    const orden = { kinder: 0, primaria: 1, secundaria: 2, preparatoria: 3, '': 4 };
+    return [...view.grades.entries()]
+      .map(([key, groups]) => {
+        const nivel = levelLabelOf(groups[0]);
+        return {
+          id: key,
+          label: nivel ? `${groups[0].grade}° de ${nivel.toLowerCase()}` : `Grado ${groups[0].grade}`,
+          _orden: [orden[groups[0].level || ''] ?? 3, String(groups[0].grade)],
+        };
+      })
+      .sort((a, b) => a._orden[0] - b._orden[0] || a._orden[1].localeCompare(b._orden[1], 'es', { numeric: true }))
+      .map(({ id, label }) => ({ id, label }));
   }
   if (type === 'subject') {
     const scheduled = new Set((view.response.assignments || []).map((a) => a.subject_id));
