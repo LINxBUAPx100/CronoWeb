@@ -32,12 +32,15 @@ lo implementa y nada más.
 
 **Concepto: «cuaderno de dirección».** Papel cálido, azul tinta para la estructura
 (encabezados, títulos, foco) y terracota sólo para la acción (botón primario, paso
-activo, la marca). Titulares en **Instrument Serif**, interfaz en **DM Sans** —
-ambas OFL y alojadas en el repositorio (`assets/fonts/`, 76 KB), porque la app
-debe abrir sin internet.
+activo, la marca).
+
+Tipografía: **Archivo** en la interfaz y los titulares, **Archivo Narrow** dentro
+de la tabla del horario —donde el ancho es oro: «Form. Cívica y Ética» cabe en un
+renglón y con cualquier otra familia se parte en dos—. Ambas OFL y alojadas en el
+repositorio (`assets/fonts/`, 88 KB), porque la app debe abrir sin internet.
 
 Una sola superficie continua: la jerarquía se construye con espacio en blanco,
-cambio de **familia tipográfica** y líneas de un píxel, no con paneles anidados.
+peso y ancho tipográfico, y líneas de un píxel — no con paneles anidados.
 Las únicas cajas que quedan son las que representan algo físico — la hoja
 imprimible y los controles.
 

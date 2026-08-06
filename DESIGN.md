@@ -11,8 +11,8 @@ si algo se ve distinto en el código, el código está mal.
 La herramienta vive en una escuela pública: papeleo, tinta, engargolado, hojas
 pegadas en la puerta del salón. En lugar de disimularlo con estética de SaaS
 —fondo gris azulado, acento turquesa, todo redondeado— el diseño lo abraza:
-papel cálido, tinta azul oscura, un acento terracota de sello, y titulares en
-serif editorial como los de un documento oficial bien hecho.
+papel cálido, tinta azul oscura, un acento terracota de sello, y una grotesca
+robusta en dos anchos, como la señalética y los formatos oficiales.
 
 **Palabras clave:** papel · tinta · sello · institucional · cálido · legible.
 
@@ -97,59 +97,73 @@ de Tailwind. Son fluorescentes sobre papel y delatan la plantilla.
 
 ## 3 · Tipografía
 
-Dos familias con trabajos distintos. Ambas OFL y **alojadas en el repositorio**
-(`assets/fonts/`, 64 KB en total): la app tiene que funcionar sin internet y en
-GitHub Pages, así que no hay `@import` de Google Fonts.
+**Una familia, dos anchos: Archivo y Archivo Narrow.** OFL y **alojadas en el
+repositorio** (`assets/fonts/`, 88 KB): la app tiene que funcionar sin internet y
+en GitHub Pages, así que no hay `@import` de Google Fonts.
+
+| Ancho | Dónde | Por qué |
+|---|---|---|
+| **Archivo** | interfaz, titulares, cifras, nombres de día, número de hora | grotesca robusta; los titulares en 700 tienen peso sin gritar |
+| **Archivo Narrow** | dentro de la tabla del horario | el ancho es oro en una celda: **«Form. Cívica y Ética» cabe en un renglón** y con cualquier otra familia se parte en dos |
+
+Medido en el escenario de ejemplo (198 clases, formato técnico): **0 nombres de
+materia partidos en dos renglones**. Con la tipografía anterior se partían en
+todas las celdas de Formación Cívica y Ética.
+
+En el formato para alumnos el cuerpo crece a 20 px y algunos nombres largos sí
+vuelven a partirse (12 de 198): ahí es correcto, porque el tamaño manda sobre la
+compacidad.
+
+**Descartadas y por qué:**
+- *Instrument Serif + DM Sans* (versión anterior) — el serif de alto contraste
+  daba aire de invitación de boda, no de documento escolar, y no tiene negrita.
+- *Source Serif + Source Sans* — correcta pero sin carácter propio.
+- *IBM Plex Sans* — buena, pero más ancha: obliga a partir nombres de materia.
+- *Libre Franklin* — sólida; perdió contra Archivo por el mismo motivo de ancho.
 
 ```css
 @font-face {
-  font-family: 'Instrument Serif';
-  src: url('../fonts/instrument-serif-latin-400-normal.woff2') format('woff2');
+  font-family: 'Archivo';
+  src: url('../fonts/archivo-latin-400-normal.woff2') format('woff2');
   font-weight: 400; font-style: normal; font-display: swap;
 }
-@font-face {
-  font-family: 'DM Sans';
-  src: url('../fonts/dm-sans-latin-400-normal.woff2') format('woff2');
-  font-weight: 400; font-style: normal; font-display: swap;
-}
-/* + 500 y 700 */
+/* + 600 y 700, y los tres pesos de 'Archivo Narrow' */
 
---font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
---font-ui: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+--font-display: 'Archivo', -apple-system, 'Segoe UI', Roboto, sans-serif;
+--font-ui:      'Archivo', -apple-system, 'Segoe UI', Roboto, sans-serif;
+--font-narrow:  'Archivo Narrow', 'Archivo', 'Segoe UI', Roboto, sans-serif;
 ```
-
-- **Instrument Serif** — sólo titulares. Alto contraste, remates finos, aire
-  editorial. Es lo que hace que la página no parezca un panel de control.
-- **DM Sans** — todo lo demás. Geométrica, cálida, muy legible en 13-14 px.
 
 ### Escala
 
 | Rol | Familia | Tamaño / interlínea | Peso | Tracking |
 |---|---|---|---|---|
-| Título de pantalla (`h3`) | Display | 30px / 1.15 | 400 | −0.02em |
-| Título de resultados (`h2`) | Display | 30px / 1.15 | 400 | −0.02em |
-| Título de hoja (`.cw-card__title`) | Display | 27px / 1.15 | 400 | −0.02em |
-| Título hoja «alumnos» | Display | 46px / 1.05 | 400 | −0.025em |
-| Cifra de métrica | Display | 30px / 1.1 | 400 | −0.02em |
-| Nombre en fila (profesor) | UI | 14.5px | 500 | 0 |
-| Cuerpo | UI | 14px / 1.55 | 400 | 0 |
-| Descripción de sección | UI | 14.5px / 1.55 | 400 | 0 |
-| Etiqueta de campo | UI | 12.5px | 500 | 0 |
-| Encabezado de columna | UI | 11px | 700 | 0.07em, MAYÚS |
-| Ayuda / pie | UI | 12px | 400 | 0 |
-| Celda de horario | UI | 12.5px | 700 | −0.005em |
+| Título de pantalla (`h3`) | Archivo | 30px / 1.14 | 700 | −0.025em |
+| Título de resultados (`h2`) | Archivo | 30px / 1.14 | 700 | −0.025em |
+| Título de hoja | Archivo | 31px / 1.06 | 700 | −0.035em |
+| Título hoja «alumnos» | Archivo | 68px / 1.06 | 700 | −0.045em |
+| Cifra de métrica | Archivo | 29px / 1.1 | 700 | −0.03em |
+| Número de hora (hoja) | Archivo | 19px / 1 | 700 | −0.03em |
+| Nombre en fila (profesor) | Archivo | 14.5px | 500 | 0 |
+| Cuerpo | Archivo | 14px / 1.55 | 400 | 0 |
+| Etiqueta de campo | Archivo | 12.5px | 500 | 0 |
+| Encabezado de columna | Archivo | 11px | 700 | 0.07em, MAYÚS |
+| Nombre de día (hoja) | Archivo | 10.5px | 700 | 0.17em, MAYÚS |
+| **Celda de horario** | **Archivo Narrow** | 12.5px | 700 | −0.005em |
+| **Profesor en la celda** | **Archivo Narrow** | 10.5px | 400 | 0 |
 
-**Cuatro niveles de jerarquía, no uno.** Antes casi todo era DM-Sans-14-semibold
-en gris: la única diferencia entre un título y una etiqueta eran dos píxeles. Ahora
-la jerarquía cambia de **familia** (serif ↔ sans), no sólo de tamaño.
+**La jerarquía es de peso y ancho, no de familia.** Con una sola grotesca en dos
+anchos, 700 vs 400 y 30px vs 12px bastan para separar cuatro niveles, y todo se
+ve del mismo producto.
 
 **Números tabulares obligatorios** (`font-variant-numeric: tabular-nums`) en
 horas, contadores y cifras: sin ellos `07:00` y `11:30` tienen anchos distintos y
 la columna de horas baila.
 
-**Prohibido:** Inter, Poppins, Montserrat, Roboto como fuente de titular; más de
-dos familias; peso 600 en Instrument Serif (no existe, el navegador lo simula y
-se ve sucio).
+**Prohibido:** Inter, Poppins, Montserrat como titular; mezclar una tercera
+familia; usar Archivo Narrow para texto de formulario (a 13 px cansa la vista);
+y pedir pesos que no están descargados —el navegador los simula y se ven sucios—:
+sólo existen 400, 600 y 700 de cada ancho.
 
 ---
 
