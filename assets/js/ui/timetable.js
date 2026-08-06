@@ -194,14 +194,16 @@ function renderTable(view, cellFor, { format, columns = null }) {
 
   const thead = el('thead');
   const headRow = el('tr');
-  const corner = el('th', null, 'Hora');
-  corner.style.backgroundColor = accent;
+  const corner = el('th', 'cw-th-hour', 'Hora');
+  corner.style.borderBottomColor = accent;
   if (columns) corner.rowSpan = 2;
   headRow.appendChild(corner);
 
   for (const day of view.days) {
     const th = el('th', null, day);
-    th.style.backgroundColor = accent;
+    // Regla gruesa bajo el título en vez de banda de color: la misma jerarquía
+    // con una fracción de la tinta, y sin el aire de «tabla de Word».
+    th.style.borderBottomColor = accent;
     if (columns) th.colSpan = perDay;
     headRow.appendChild(th);
   }
@@ -212,7 +214,7 @@ function renderTable(view, cellFor, { format, columns = null }) {
     for (const _day of view.days) {
       for (const column of columns) {
         const th = el('th', 'cw-subhead', column.label);
-        th.style.backgroundColor = accent;
+        th.style.borderBottomColor = accent;
         subRow.appendChild(th);
       }
     }
@@ -234,8 +236,9 @@ function renderTable(view, cellFor, { format, columns = null }) {
     }
 
     const hour = el('td', 'cw-hour');
-    hour.appendChild(el('b', null, block.label));
-    hour.appendChild(document.createTextNode(`${block.start}–${block.end}`));
+    // El número de la hora es el ancla visual de la fila; el rango es apoyo.
+    hour.appendChild(el('b', null, block.label.replace(/[^0-9]/g, '') || block.label));
+    hour.appendChild(el('span', null, `${block.start} – ${block.end}`));
     row.appendChild(hour);
 
     for (const day of view.days) {
@@ -257,26 +260,40 @@ function renderTable(view, cellFor, { format, columns = null }) {
   return table;
 }
 
+/**
+ * Celda de horario.
+ *
+ * El color codifica la materia UNA sola vez —en el nombre— y no tres (fondo +
+ * borde + texto). Rellenar 33 celdas de color es lo que hacía que la hoja
+ * pareciera plantilla: mucha tinta, cero jerarquía. Sin fondos, el ojo sigue la
+ * retícula tipográfica y el color queda como agrupador, no como ruido.
+ */
 function renderCell(view, cells, format) {
   const td = el('td', 'cw-cell');
   if (!cells.length) {
     td.classList.add('cw-cell--empty');
-    if (format === 'alumnos') td.textContent = '—';
     return td;
   }
 
-  // Una celda puede llevar varias entradas en la vista por materia (varios grupos
-  // toman la misma materia a la misma hora, con distintos profesores).
-  const color = view.subjects.get(cells[0].subjectId)?.color || '#475569';
-  td.style.backgroundColor = rgba(color, format === 'alumnos' ? 0.16 : 0.1);
-  td.style.borderLeft = `${format === 'alumnos' ? 4 : 3}px solid ${color}`;
-
   for (const cell of cells) {
-    const cellColor = view.subjects.get(cell.subjectId)?.color || color;
+    const color = view.subjects.get(cell.subjectId)?.color || '#55504a';
+    const line = el('div', 'cw-cell__line');
+
+    // En el formato para alumnos se lee de lejos: una pleca de color a la
+    // izquierda ayuda a saltar de materia en materia sin leer.
+    if (format === 'alumnos') {
+      const keyline = el('i', 'cw-cell__key');
+      keyline.style.backgroundColor = color;
+      line.appendChild(keyline);
+    }
+
+    const body = el('div', 'cw-cell__body');
     const primary = el('div', 'cw-cell__subject', cell.primary);
-    primary.style.color = cellColor;
-    td.appendChild(primary);
-    if (cell.secondary) td.appendChild(el('div', 'cw-cell__teacher', cell.secondary));
+    primary.style.color = color;
+    body.appendChild(primary);
+    if (cell.secondary) body.appendChild(el('div', 'cw-cell__teacher', cell.secondary));
+    line.appendChild(body);
+    td.appendChild(line);
   }
   return td;
 }
@@ -345,7 +362,8 @@ function buildGroupCard(view, groupId, format) {
     legend: [...used],
     table,
     head: {
-      title: format === 'alumnos' ? `Grupo ${groupLabel(group)}` : `Horario ${groupLabel(group)}`,
+      // En el cartel del salón el grupo se lee como lo dice la escuela: «1° A».
+      title: format === 'alumnos' ? `${group.grade}° ${group.name}` : `Horario ${groupLabel(group)}`,
       subtitle: format === 'alumnos'
         ? [view.branding.cycle_label, tutorName && `Tutor: ${tutorName}`].filter(Boolean).join(' · ')
         : [view.branding.cycle_label, group.shift && `Turno ${group.shift}`,
@@ -432,7 +450,7 @@ function buildGradeCard(view, gradeName, format) {
     legend: [...used],
     table,
     head: {
-      title: `Grado ${gradeName}`,
+      title: `${gradeName}° grado`,
       subtitle: [view.branding.cycle_label, `${groups.length} grupo(s)`,
         tutors.length ? `Tutores — ${tutors.join(' · ')}` : null].filter(Boolean).join(' · '),
       aside: [['Grupos', String(groups.length)]],

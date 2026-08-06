@@ -186,10 +186,29 @@ al apuntar o escribir.
 Reposo texto `--ink-2`; hover fondo `--paper`; **activo** fondo `--accent-soft`,
 texto `--accent-2`, número en círculo terracota sólido. Deshabilitado 40 % opacidad.
 
-### Hoja imprimible
+### Hoja imprimible — composición editorial
 
-Fondo blanco, radio 14px, sombra `0 1px 3px rgba(27,26,23,.07), 0 14px 34px -10px rgba(27,26,23,.16)`.
-Banda de encabezado de tabla en azul tinta sólido.
+**El color codifica la materia UNA vez: en el nombre.** La versión anterior lo
+codificaba tres veces —fondo tintado + borde izquierdo + texto de color— en las
+33 celdas de la semana. Ese exceso de tinta es exactamente lo que hace que un
+horario parezca plantilla descargada: mucha decoración, ninguna jerarquía.
+
+| Elemento | Antes | Ahora |
+|---|---|---|
+| Encabezado de días | banda azul rellena, texto blanco | versalitas sobre regla de 2px |
+| Celda | fondo al 10 % + borde de color + texto de color | sólo el nombre en color |
+| Rejilla | borde completo en las cuatro caras | hairline horizontal; vertical al 40 % |
+| Columna de hora | etiqueta «1a» + rango, mismo tamaño | número en serif 21px + rango 9px |
+| Celda vacía | relleno gris | nada |
+| Pie | línea de 1px | regla de 2px, leyenda en versalitas |
+
+En el formato **para alumnos** el color vuelve como **pleca vertical de 3-4px** a
+la izquierda de cada clase: a un metro de distancia hace falta un ancla no
+tipográfica para saltar de materia en materia. En el formato **técnico** no hay
+pleca — se lee de cerca y de frente.
+
+El marco de pantalla (`.cw-sheet__frame`) sí lleva radio 14px y sombra; la hoja
+en sí no lleva ninguna, porque html2canvas no rasteriza `box-shadow`.
 
 ### Mensaje
 

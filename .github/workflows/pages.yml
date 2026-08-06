@@ -1,0 +1,76 @@
+# Despliegue de CronoWeb en GitHub Pages.
+#
+# Por qué un workflow y no el builder clásico: el builder «legacy» corre Jekyll
+# sobre el repositorio y, cuando se atora, no deja ni log ni mensaje de error —
+# el sitio simplemente responde 404 mientras el estado dice «building» para
+# siempre. Este workflow publica el repositorio tal cual, con log visible en la
+# pestaña Actions, y falla ruidosamente si algo va mal.
+#
+# Requiere una vez: Settings → Pages → Source: **GitHub Actions**.
+#
+# CronoWeb no tiene build: el sitio ES el repositorio (HTML + ES modules + CSS +
+# fuentes y html2canvas vendorizados). El workflow sólo verifica y sube.
+
+name: Desplegar en GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:        # permite relanzar el despliegue a mano
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Un despliegue a la vez; no se cancela el que está en curso.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  verificar:
+    name: Verificar el motor
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # Las mismas pruebas que corren en local: si el motor se rompe, no se
+      # publica. Incluye el verificador independiente de restricciones duras.
+      - name: Pruebas del motor y del editor
+        run: node tools/verify-engine.mjs
+
+  publicar:
+    name: Publicar
+    needs: verificar
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Cinturón y tirantes: .nojekyll ya está versionado, pero si alguien lo
+      # borra el sitio dejaría de servir cualquier carpeta que empiece con "_".
+      - name: Garantizar .nojekyll
+        run: touch .nojekyll
+
+      - name: Comprobar que están los archivos que el sitio necesita
+        run: |
+          set -e
+          for f in index.html assets/css/app.css assets/js/main.js \
+                   assets/vendor/html2canvas.min.js \
+                   backend/samples/demo_secundaria.json; do
+            test -f "$f" || { echo "FALTA: $f"; exit 1; }
+          done
+          test -n "$(ls assets/fonts/*.woff2 2>/dev/null)" || { echo "FALTAN las tipografías"; exit 1; }
+          echo "Todo en su lugar."
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4

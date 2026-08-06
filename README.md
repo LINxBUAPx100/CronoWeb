@@ -331,16 +331,30 @@ Para demostrarle el modo personalizado a una escuela antes de que exista el cobr
 
 ## Publicar en GitHub Pages
 
-El repositorio ya está listo: no hay build, no hay dependencias que instalar y el
-`.nojekyll` evita que Jekyll ignore carpetas.
+El repositorio **es** el sitio: no hay build, no hay dependencias y todo —fuentes,
+html2canvas, el escenario de ejemplo— está versionado, así que funciona incluso
+sin internet una vez cargado.
 
-1. `git add -A && git commit -m "CronoWeb v1"` y `git push`.
-2. En GitHub: **Settings → Pages → Source: Deploy from a branch → `main` / `root`**.
-3. Queda en `https://<usuario>.github.io/CronoWeb/`.
+### Configuración (una sola vez)
 
-`backend/samples/demo_secundaria.json` también se publica, que es de donde el
-frontend carga el ejemplo. El backend de Python no se ejecuta en Pages —está ahí
-para cuando haga falta.
+**Settings → Pages → Source: GitHub Actions.**
+
+El workflow [`.github/workflows/pages.yml`](.github/workflows/pages.yml) publica en
+cada push a `main`. Antes de publicar corre `tools/verify-engine.mjs`: si el motor
+se rompe, el sitio no se actualiza.
+
+> **No uses «Deploy from a branch».** Ese es el builder clásico, que pasa el repo
+> por Jekyll y, cuando se atora, no deja ni log ni mensaje: el estado se queda en
+> «building» para siempre y el sitio responde 404 sin explicar por qué. Con el
+> workflow cada despliegue tiene su log en la pestaña **Actions**.
+
+El sitio queda en `https://<usuario>.github.io/CronoWeb/`. Todas las rutas del
+frontend son relativas, así que servir desde un subdirectorio funciona sin cambiar
+nada.
+
+`backend/samples/demo_secundaria.json` también se publica —de ahí carga el
+ejemplo—. El backend de Python no se ejecuta en Pages: está ahí para cuando haga
+falta el modo servidor.
 
 ---
 

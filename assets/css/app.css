@@ -434,81 +434,152 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--brand); 
 .cw-sheet__frame { border-radius: var(--r-lg); box-shadow: var(--lift-2); background: var(--surface); overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
 /* =========================================================================
-   Hoja imprimible — html2canvas rasteriza esto.
-   Colores literales a propósito (ver DESIGN.md §9).
+   LA HOJA IMPRIMIBLE — html2canvas rasteriza este nodo.
+
+   Composición editorial, no rejilla de hoja de cálculo:
+   · el color codifica la materia UNA vez (en el nombre), no tres veces
+     (fondo + borde + texto). Rellenar 33 celdas de color es lo que hacía que
+     el horario pareciera plantilla descargada;
+   · sin banda de encabezado rellena: una regla gruesa da la misma jerarquía
+     con una fracción de tinta;
+   · líneas horizontales para separar horas, verticales apenas insinuadas;
+   · el número de hora es un ancla tipográfica en serif, no una etiqueta más.
+
+   Colores en hex/rgba literales a propósito: html2canvas 1.4.1 no interpreta
+   color-mix() ni oklch(), y no rasteriza box-shadow (por eso aquí no hay).
    ========================================================================= */
-.cw-card { background: #ffffff; padding: 26px 28px 18px; color: #1b1a17; width: 980px; }
+.cw-card { background: #ffffff; padding: 30px 32px 20px; color: #1b1a17; width: 980px; }
 .cw-card--wide { width: 1400px; }
-.cw-card--alumnos { width: 1080px; padding: 32px 34px 20px; }
+.cw-card--alumnos { width: 1080px; padding: 38px 40px 26px; }
 
-.cw-card__head { display: flex; align-items: center; gap: 16px; padding-bottom: 15px; border-bottom: 2px solid #22375c; }
-.cw-card__logo { height: 48px; width: auto; max-width: 150px; object-fit: contain; }
+/* ── Encabezado ─────────────────────────────────────────────────────────── */
+.cw-card__head { display: flex; align-items: flex-end; gap: 20px; padding-bottom: 16px; }
+.cw-card__logo { height: 50px; width: auto; max-width: 150px; object-fit: contain; }
 .cw-card__titles { flex: 1; min-width: 0; }
-.cw-card__school { font-size: 10.5px; font-weight: 700; color: #8a837a; text-transform: uppercase; letter-spacing: .11em; margin-bottom: 3px; }
+.cw-card__school {
+  font-size: 10px; font-weight: 700; color: #8a837a;
+  text-transform: uppercase; letter-spacing: .16em; margin-bottom: 5px;
+}
 .cw-card__title {
-  font-family: 'Instrument Serif', Georgia, serif; font-size: 27px; font-weight: 400;
-  letter-spacing: -.02em; line-height: 1.12; color: #22375c;
+  font-family: 'Instrument Serif', Georgia, serif; font-size: 34px; font-weight: 400;
+  letter-spacing: -.025em; line-height: 1.04; color: #1b1a17;
 }
-.cw-card__meta { font-size: 12px; color: #55504a; margin-top: 4px; }
-.cw-card__aside { text-align: right; font-size: 10.5px; color: #8a837a; flex: none; }
-.cw-card__aside b { display: block; font-size: 13px; color: #1b1a17; font-weight: 500; }
-.cw-card__aside > div + div { margin-top: 5px; }
+.cw-card__meta { font-size: 11.5px; color: #55504a; margin-top: 7px; letter-spacing: .01em; }
+.cw-card__aside {
+  text-align: right; font-size: 9.5px; color: #8a837a; flex: none;
+  text-transform: uppercase; letter-spacing: .12em;
+}
+.cw-card__aside b {
+  display: block; font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 17px; color: #1b1a17; font-weight: 400; letter-spacing: 0;
+  text-transform: none; margin-bottom: 1px;
+}
+.cw-card__aside > div + div { margin-top: 8px; }
 
-.cw-card--alumnos .cw-card__title { font-size: 46px; letter-spacing: -.025em; }
-.cw-card--alumnos .cw-card__meta { font-size: 15px; margin-top: 6px; }
-.cw-card--alumnos .cw-card__head { padding-bottom: 19px; border-bottom-width: 3px; }
-.cw-card--alumnos .cw-card__logo { height: 64px; }
+.cw-card--alumnos .cw-card__title { font-size: 76px; letter-spacing: -.035em; }
+.cw-card--alumnos .cw-card__meta { font-size: 16px; margin-top: 10px; }
+.cw-card--alumnos .cw-card__head { padding-bottom: 22px; }
+.cw-card--alumnos .cw-card__logo { height: 68px; }
+.cw-card--alumnos .cw-card__school { font-size: 12px; letter-spacing: .18em; }
 
-.cw-timetable { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 18px; table-layout: fixed; font-variant-numeric: tabular-nums; }
-.cw-timetable th, .cw-timetable td { border-right: 1px solid #e3ddd2; border-bottom: 1px solid #e3ddd2; padding: 0; }
-.cw-timetable tr > *:first-child { border-left: 1px solid #e3ddd2; }
-.cw-timetable thead tr:first-child > * { border-top: 1px solid #e3ddd2; }
+/* ── Tabla ──────────────────────────────────────────────────────────────── */
+.cw-timetable {
+  width: 100%; border-collapse: collapse; table-layout: fixed;
+  font-variant-numeric: tabular-nums;
+}
+.cw-timetable th, .cw-timetable td { padding: 0; }
+
+/* Los días: versalitas sobre una regla gruesa. Sin relleno. */
 .cw-timetable thead th {
-  background: #22375c; color: #ffffff; font-size: 11px; font-weight: 700;
-  padding: 10px 6px; text-transform: uppercase; letter-spacing: .09em;
-  border-right-color: rgba(255, 255, 255, .16); border-bottom-color: #22375c; border-top-color: #22375c;
+  font-size: 10.5px; font-weight: 700; color: #1b1a17;
+  text-transform: uppercase; letter-spacing: .17em;
+  padding: 0 10px 9px; text-align: left; vertical-align: bottom;
+  border-bottom: 2px solid #22375c;
 }
-.cw-timetable thead tr:first-child > *:first-child { border-top-left-radius: 8px; }
-.cw-timetable thead tr:first-child > *:last-child { border-top-right-radius: 8px; }
-.cw-timetable thead th:first-child { width: 94px; border-left-color: #22375c; }
-.cw-timetable .cw-subhead { font-size: 10px; letter-spacing: .05em; padding: 5px 3px; }
-.cw-timetable .cw-hour { background: #faf8f4; text-align: center; font-size: 10.5px; color: #8a837a; padding: 8px 4px; vertical-align: middle; }
-.cw-timetable .cw-hour b { display: block; font-family: 'Instrument Serif', Georgia, serif; font-size: 15px; font-weight: 400; color: #1b1a17; }
+.cw-timetable thead th.cw-th-hour { width: 78px; text-align: right; padding-right: 14px; }
+.cw-timetable .cw-subhead {
+  font-size: 9.5px; letter-spacing: .1em; padding: 6px 10px 7px; color: #55504a;
+  border-bottom: 2px solid #22375c;
+}
+
+/* Horas: número en serif como ancla de la fila, rango debajo en gris. */
+.cw-timetable .cw-hour {
+  text-align: right; padding: 12px 14px 12px 0; vertical-align: top;
+  border-bottom: 1px solid #eeeae1; border-right: 1px solid #e3ddd2;
+}
+.cw-timetable .cw-hour b {
+  display: block; font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 21px; font-weight: 400; color: #22375c; line-height: 1;
+}
+.cw-timetable .cw-hour span {
+  display: block; font-size: 9px; color: #a49c92; margin-top: 4px;
+  letter-spacing: .04em; white-space: nowrap;
+}
+
 .cw-timetable .cw-break td {
-  background: #f1eee6; text-align: center; font-size: 10px; font-weight: 700;
-  color: #8a837a; letter-spacing: .16em; text-transform: uppercase; padding: 7px;
+  text-align: center; font-size: 9px; font-weight: 700;
+  color: #a49c92; letter-spacing: .3em; text-transform: uppercase;
+  padding: 9px 6px; border-bottom: 1px solid #eeeae1;
 }
-.cw-cell { padding: 7px 9px; height: 48px; vertical-align: middle; }
+
+/* Celdas: sin fondo. Separación por línea horizontal y una vertical tenue. */
+.cw-cell {
+  padding: 12px 10px; height: 54px; vertical-align: top;
+  border-bottom: 1px solid #eeeae1; border-right: 1px solid #f5f2ec;
+}
+.cw-timetable tr > td:last-child { border-right: 0; }
+.cw-cell__line { display: flex; gap: 9px; align-items: flex-start; }
+.cw-cell__line + .cw-cell__line { margin-top: 9px; }
+.cw-cell__key { flex: none; width: 3px; align-self: stretch; min-height: 26px; border-radius: 2px; }
+.cw-cell__body { min-width: 0; }
 .cw-cell__subject { font-size: 12.5px; font-weight: 700; line-height: 1.25; letter-spacing: -.005em; }
-.cw-cell__teacher { font-size: 10.5px; color: #55504a; line-height: 1.3; margin-top: 2px; }
-.cw-cell--empty { background: #faf8f4; }
-.cw-cell > .cw-cell__subject + .cw-cell__teacher + .cw-cell__subject { margin-top: 6px; }
+.cw-cell__teacher { font-size: 10.5px; color: #8a837a; line-height: 1.3; margin-top: 3px; }
+.cw-cell--empty { border-bottom: 1px solid #eeeae1; }
 
-.cw-timetable--alumnos thead th { font-size: 13px; padding: 13px 6px; }
-.cw-timetable--alumnos .cw-hour { font-size: 11px; padding: 10px 4px; }
-.cw-timetable--alumnos .cw-hour b { font-size: 19px; }
-.cw-timetable--alumnos .cw-cell { height: 70px; padding: 10px 13px; }
-.cw-timetable--alumnos .cw-cell__subject { font-size: 17.5px; font-weight: 700; line-height: 1.2; }
-.cw-timetable--alumnos .cw-cell__teacher { font-size: 12.5px; margin-top: 3px; }
-.cw-timetable--alumnos .cw-cell--empty { color: #d8d1c6; text-align: center; font-size: 15px; }
-.cw-timetable--alumnos .cw-break td { font-size: 11.5px; padding: 10px; }
+/* Formato para alumnos: se lee de pie, a un metro de distancia. */
+.cw-timetable--alumnos thead th { font-size: 13px; letter-spacing: .2em; padding: 0 14px 13px; border-bottom-width: 3px; }
+.cw-timetable--alumnos thead th.cw-th-hour { width: 104px; }
+.cw-timetable--alumnos .cw-hour { padding: 17px 18px 17px 0; }
+.cw-timetable--alumnos .cw-hour b { font-size: 30px; }
+.cw-timetable--alumnos .cw-hour span { font-size: 11px; margin-top: 5px; }
+.cw-timetable--alumnos .cw-cell { height: 82px; padding: 16px 14px; }
+.cw-timetable--alumnos .cw-cell__subject { font-size: 20px; line-height: 1.15; }
+.cw-timetable--alumnos .cw-cell__teacher { font-size: 13px; margin-top: 5px; color: #55504a; }
+.cw-timetable--alumnos .cw-break td { font-size: 11px; padding: 13px 6px; letter-spacing: .34em; }
+.cw-timetable--alumnos .cw-cell__key { width: 4px; min-height: 40px; }
 
-.cw-card--wide .cw-cell { padding: 5px 6px; height: 44px; }
-.cw-card--wide .cw-cell__subject { font-size: 11.5px; }
-.cw-card--wide .cw-cell__teacher { font-size: 9.5px; }
+/* Vista por grado: muchas columnas, todo más apretado. */
+.cw-card--wide .cw-cell { padding: 8px 7px; height: 46px; }
+.cw-card--wide .cw-cell__subject { font-size: 11px; }
+.cw-card--wide .cw-cell__teacher { font-size: 9px; margin-top: 2px; }
+.cw-card--wide .cw-timetable thead th { padding: 0 7px 8px; letter-spacing: .12em; }
+.cw-card--wide .cw-timetable .cw-hour { padding: 9px 10px 9px 0; }
+.cw-card--wide .cw-timetable .cw-hour b { font-size: 17px; }
 
-.cw-card__foot { display: flex; align-items: flex-end; gap: 14px; padding-top: 13px; margin-top: 15px; border-top: 1px solid #e3ddd2; }
-.cw-card__legend { display: flex; flex-wrap: wrap; gap: 5px 15px; font-size: 10.5px; color: #55504a; }
-.cw-card__legend i { display: inline-block; width: 7px; height: 7px; border-radius: 2px; margin-right: 6px; vertical-align: baseline; }
-.cw-card__note { font-size: 11px; color: #8a837a; margin-top: 6px; }
+/* ── Pie ────────────────────────────────────────────────────────────────── */
+.cw-card__foot {
+  display: flex; align-items: flex-end; gap: 18px;
+  padding-top: 14px; margin-top: 18px; border-top: 2px solid #22375c;
+}
+.cw-card__legend {
+  display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 9.5px; color: #55504a;
+  text-transform: uppercase; letter-spacing: .07em; font-weight: 500;
+}
+.cw-card__legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: baseline; }
+.cw-card__note { font-size: 10.5px; color: #8a837a; margin-top: 8px; letter-spacing: .02em; }
 .cw-card--alumnos .cw-card__note { font-size: 13px; }
 
 .cw-watermark { flex: none; text-align: right; }
-.cw-watermark b { display: block; font-family: 'Instrument Serif', Georgia, serif; font-size: 19px; font-weight: 400; color: #bf5730; letter-spacing: -.015em; }
-.cw-watermark span { font-size: 9.5px; color: #8a837a; }
-.cw-watermark--soft b { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; color: #8a837a; }
-.cw-card--alumnos .cw-watermark b { font-size: 23px; }
-
+.cw-watermark b {
+  display: block; font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 20px; font-weight: 400; color: #bf5730; letter-spacing: -.02em;
+}
+.cw-watermark span {
+  display: block; font-size: 8.5px; color: #a49c92;
+  text-transform: uppercase; letter-spacing: .14em; margin-top: 2px;
+}
+.cw-watermark--soft b { font-family: 'DM Sans', sans-serif; font-size: 10.5px; font-weight: 500; color: #a49c92; letter-spacing: .04em; }
+.cw-card--alumnos .cw-watermark b { font-size: 26px; }
 /* =========================================================================
    Modo edición manual
    Se pinta sobre la hoja, pero el exportador quita estas marcas del clon:
