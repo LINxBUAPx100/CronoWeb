@@ -24,7 +24,7 @@ export const shortDay = (day) => String(day).slice(0, 3).toUpperCase();
 // --------------------------------------------------------------------------- //
 /**
  * @param {object} model
- * @param {{mode?:'simple'|'custom', budget?:number, seed?:number}} [opts]
+ * @param {{mode?:'simple'|'custom', budget?:number, seed?:number, weights?:object}} [opts]
  * @returns {object} ScheduleRequest listo para el motor
  */
 export function modelToScenario(model, opts = {}) {
@@ -38,6 +38,9 @@ export function modelToScenario(model, opts = {}) {
     short_name: (subject.short || '').trim() || abbreviate(subject.name),
     color: subject.color || PALETTE[i % PALETTE.length],
     prefers_morning: Boolean(subject.prefersMorning),
+    // Marca la carrera técnica / el área propedéutica. Viaja para la hoja
+    // impresa; el solver la ignora, una hora de especialidad ocupa lo mismo.
+    is_specialty: Boolean(subject.specialty),
     room_requirement: null,
   }));
 
@@ -108,6 +111,9 @@ export function modelToScenario(model, opts = {}) {
       seed: Number(opts.seed) || 12345,
       enable_repair: true,
       allow_partial: true,
+      // Preferencias de acomodo elegidas en Ajustes. Sólo los pesos que la
+      // escuela tocó; el contrato completa el resto con sus defaults.
+      ...(opts.weights ? { weights: opts.weights } : {}),
     },
     branding: {
       mode: custom ? 'custom' : 'simple',
@@ -205,6 +211,7 @@ export function scenarioToModel(scenario) {
     short: subject.short_name || '',
     color: subject.color || PALETTE[i % PALETTE.length],
     prefersMorning: Boolean(subject.prefers_morning),
+    specialty: Boolean(subject.is_specialty),
   }));
 
   // ── Profesores ────────────────────────────────────────────────────────

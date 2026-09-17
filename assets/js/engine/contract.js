@@ -99,6 +99,9 @@ export function normalizeRequest(raw) {
     short_name: str(s?.short_name),
     color: str(s?.color),
     prefers_morning: bool(s?.prefers_morning),
+    // Materia de especialidad (carrera técnica, taller, área propedéutica).
+    // Informativa: sale marcada en la hoja, pero no altera el cálculo.
+    is_specialty: bool(s?.is_specialty),
     room_requirement: str(s?.room_requirement),
   }));
   if (!subjects.length) issues.push('Debes capturar al menos una materia');

@@ -72,43 +72,11 @@
       <div class="cw-section-head">
         <div>
           <h3>Ajustes</h3>
-          <p>Valores técnicos. Los predeterminados funcionan para casi cualquier escuela.</p>
+          <p>Cómo se ve el horario impreso, qué prioriza el acomodo y dónde están tus datos.</p>
         </div>
       </div>
 
-      <div class="cw-form-grid">
-        <label class="cw-field">
-          <span>Segundos de cálculo</span>
-          <input type="number" id="opt-budget" min="1" max="60" step="1" value="8">
-          <small>Más segundos = más intentos con las horas difíciles.</small>
-        </label>
-        <label class="cw-field">
-          <span>Variante</span>
-          <input type="number" id="opt-seed" step="1" value="12345">
-          <small>Cambia el número para otro horario igual de válido.</small>
-        </label>
-        <label class="cw-field">
-          <span>Calidad de la imagen</span>
-          <select id="opt-scale">
-            <option value="2">Alta (2×) — pantalla</option>
-            <option value="3" selected>Muy alta (3×) — impresión</option>
-            <option value="4">Máxima (4×) — cartel</option>
-          </select>
-        </label>
-        <label class="cw-field">
-          <span>Dónde se calcula</span>
-          <select id="opt-engine">
-            <option value="local" selected>En este navegador</option>
-            <option value="remote">En el servidor CronoWeb</option>
-          </select>
-          <small>En el navegador, los datos no salen de esta computadora.</small>
-        </label>
-        <label class="cw-field" id="field-api" hidden>
-          <span>Dirección del servidor</span>
-          <input type="url" id="opt-api" placeholder="http://localhost:8000" value="http://localhost:8000">
-        </label>
-      </div>
-
+      <!-- ── Identidad ────────────────────────────────────────────────── -->
       <div class="cw-subsection">
         <h4>Identidad de la escuela</h4>
         <div class="cw-inline-field" style="margin-bottom:14px">
@@ -125,6 +93,15 @@
         <div id="branding-custom-fields" hidden>
           <div class="cw-form-grid">
             <label class="cw-field">
+              <span>Nombre de la escuela</span>
+              <input type="text" id="brand-name" placeholder="Escuela Secundaria General N.º 12">
+              <small>Encabeza cada horario impreso.</small>
+            </label>
+            <label class="cw-field">
+              <span>Ciclo escolar</span>
+              <input type="text" id="brand-cycle" placeholder="Ciclo 2026-2027">
+            </label>
+            <label class="cw-field">
               <span>Color principal</span>
               <input type="color" id="brand-color" value="#14417c">
             </label>
@@ -138,6 +115,62 @@
               <input type="text" id="brand-note" placeholder="Autorizado por la Dirección Académica">
             </label>
           </div>
+        </div>
+      </div>
+
+      <!-- ── Preferencias de acomodo ──────────────────────────────────── -->
+      <div class="cw-subsection">
+        <h4>Qué cuidar al acomodar el horario</h4>
+        <p class="cw-hint">
+          Ninguna de estas opciones puede provocar un cruce: son preferencias que CronoWeb
+          intenta respetar mientras acomoda. Si tu escuela no tiene una regla al respecto,
+          déjalas como están.
+        </p>
+        <div class="cw-form-grid" id="prefs-grid">
+          <label class="cw-field">
+            <span>Horas muertas de los profesores</span>
+            <select id="opt-gaps">
+              <option value="normal" selected>Evitarlas cuando se pueda</option>
+              <option value="alta">Evitarlas a toda costa</option>
+              <option value="off">No importan</option>
+            </select>
+            <small>Una hora muerta es un hueco entre dos clases del mismo profesor.</small>
+          </label>
+          <label class="cw-field">
+            <span>Materias pesadas temprano</span>
+            <select id="opt-morning">
+              <option value="normal" selected>Sí, en lo posible</option>
+              <option value="alta">Sí, es prioritario</option>
+              <option value="off">Da igual la hora</option>
+            </select>
+            <small>Aplica a las materias marcadas «De mañana» en el paso 2.</small>
+          </label>
+          <label class="cw-field">
+            <span>Repetir la misma materia el mismo día</span>
+            <select id="opt-repeat">
+              <option value="normal" selected>Evitarlo</option>
+              <option value="alta">Evitarlo a toda costa</option>
+              <option value="off">Se permite sin problema</option>
+            </select>
+            <small>«A toda costa» puede dejar horas sin acomodar si el plan es muy apretado.</small>
+          </label>
+        </div>
+      </div>
+
+      <!-- ── Datos ────────────────────────────────────────────────────── -->
+      <div class="cw-subsection">
+        <h4>Tus datos</h4>
+        <div class="cw-msg cw-msg--info">
+          <b>Todo se queda en esta computadora</b>
+          CronoWeb guarda la escuela en este navegador y calcula el horario aquí mismo:
+          nada se envía a ningún servidor. Por eso conviene guardar un respaldo antes de
+          cambiar de computadora o de limpiar el navegador.
+        </div>
+        <div class="cw-btn-group" style="margin-top:14px">
+          <button type="button" class="cw-btn" id="btn-backup-2">Guardar respaldo</button>
+          <button type="button" class="cw-btn" id="btn-restore-2">Abrir respaldo…</button>
+          <button type="button" class="cw-btn cw-btn--ghost" id="btn-demo-2">Cargar ejemplo</button>
+          <button type="button" class="cw-btn cw-btn--ghost" id="btn-reset-2">Empezar de cero</button>
         </div>
       </div>
     </section>

@@ -354,6 +354,11 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--brand); 
 .cw-tag--shared { background: var(--warn-bg); color: var(--warn); }
 .cw-tag--ok { background: var(--ok-bg); color: var(--ok); }
 .cw-tag--danger { background: var(--error-bg); color: var(--error); }
+.cw-tag--spec { background: var(--brand-bg, #eef3fb); color: var(--brand); margin-left: 8px; }
+
+/* Carga de materias comunes por nivel */
+.cw-catalog { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.cw-catalog__label { font-size: 12.5px; color: var(--ink-3); font-weight: 500; }
 
 .cw-list { border-top: 1px solid var(--line); }
 .cw-list__item { border-bottom: 1px solid var(--line-soft); transition: background .14s ease; }
@@ -544,9 +549,10 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--brand); 
   border-bottom: 2px solid #14417c;
 }
 
-/* Horas: número en serif como ancla de la fila, rango debajo en gris. */
+/* Horas: número en serif como ancla de la fila, rango debajo en gris.
+   Centrado vertical para que quede a la altura del texto de su fila. */
 .cw-timetable .cw-hour {
-  text-align: right; padding: 12px 14px 12px 0; vertical-align: top;
+  text-align: right; padding: 12px 14px 12px 0; vertical-align: middle;
   border-bottom: 1px solid #edf1f6; border-right: 1px solid #dfe6ef;
 }
 .cw-timetable .cw-hour b {
@@ -564,19 +570,44 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--brand); 
   padding: 9px 6px; border-bottom: 1px solid #edf1f6;
 }
 
-/* Celdas: sin fondo. Separación por línea horizontal y una vertical tenue. */
+/* Celdas: sin fondo. Separación por línea horizontal y una vertical tenue.
+   Contenido centrado en los dos ejes: en una rejilla de cuarenta casillas medio
+   vacías, un eje central se recorre de un vistazo; cinco alineaciones a la
+   izquierda obligan al ojo a buscar columna por columna.
+
+   Los tres tamaños de cada línea (is-fit-lg / normal / is-fit-sm) los reparte
+   `renderCell` según cuánto texto lleve, y aquí cada vista los traduce a los
+   píxeles que caben en SU casilla: la de un grupo es el doble de ancha que la
+   de un grado con diez columnas. */
 .cw-cell {
-  padding: 12px 10px; height: 54px; vertical-align: top;
+  padding: 10px 8px; height: 54px; vertical-align: middle; text-align: center;
   border-bottom: 1px solid #edf1f6; border-right: 1px solid #f4f7fa;
 }
 .cw-timetable tr > td:last-child { border-right: 0; }
-.cw-cell__line { display: flex; gap: 9px; align-items: flex-start; }
-.cw-cell__line + .cw-cell__line { margin-top: 9px; }
+.cw-cell__line { display: flex; gap: 8px; align-items: center; justify-content: center; }
+.cw-cell__line + .cw-cell__line { margin-top: 8px; }
 .cw-cell__key { flex: none; width: 3px; align-self: stretch; min-height: 26px; border-radius: 2px; }
 .cw-cell__body { min-width: 0; }
-.cw-cell__subject { font-size: 12.5px; font-weight: 700; line-height: 1.25; letter-spacing: -.005em; }
-.cw-cell__teacher { font-size: 10.5px; color: #7b899c; line-height: 1.3; margin-top: 3px; }
+.cw-cell__subject { font-size: 13.5px; font-weight: 700; line-height: 1.2; letter-spacing: -.005em; }
+.cw-cell__subject.is-fit-lg { font-size: 15px; }
+.cw-cell__subject.is-fit-sm { font-size: 12px; }
+.cw-cell__teacher { font-size: 11px; color: #7b899c; line-height: 1.3; margin-top: 3px; }
+.cw-cell__teacher.is-fit-lg { font-size: 12px; }
+.cw-cell__teacher.is-fit-sm { font-size: 10px; }
 .cw-cell--empty { border-bottom: 1px solid #edf1f6; }
+
+/* Especialidad: la carrera técnica, el taller, el área propedéutica.
+   Es la ÚNICA casilla con fondo en toda la hoja, y por eso se ve sin buscarla:
+   si se tiñeran todas —como en las plantillas de Word— no distinguiría nada. */
+.cw-cell.is-specialty { background: #f6f8fc; box-shadow: inset 2px 0 0 #14417c; }
+.cw-cell__badge {
+  font-family: 'Archivo', sans-serif;
+  font-size: 7.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  opacity: .75; margin-top: 2px; line-height: 1;
+}
+.cw-timetable--alumnos .cw-cell__badge { font-size: 9px; letter-spacing: .18em; margin-top: 4px; }
+.cw-card--wide .cw-cell__badge { font-size: 6.5px; letter-spacing: .1em; }
+.cw-card__legend span.is-specialty { font-weight: 600; }
 
 /* Formato para alumnos: se lee de pie, a un metro de distancia. */
 .cw-timetable--alumnos thead th { font-size: 13px; letter-spacing: .2em; padding: 0 14px 13px; border-bottom-width: 3px; }
@@ -584,16 +615,25 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--brand); 
 .cw-timetable--alumnos .cw-hour { padding: 17px 18px 17px 0; }
 .cw-timetable--alumnos .cw-hour b { font-size: 30px; }
 .cw-timetable--alumnos .cw-hour span { font-size: 11px; margin-top: 5px; }
-.cw-timetable--alumnos .cw-cell { height: 82px; padding: 16px 14px; }
-.cw-timetable--alumnos .cw-cell__subject { font-size: 20px; line-height: 1.15; }
-.cw-timetable--alumnos .cw-cell__teacher { font-size: 13px; margin-top: 5px; color: #5a677d; }
+.cw-timetable--alumnos .cw-cell { height: 82px; padding: 14px 12px; }
+.cw-timetable--alumnos .cw-cell__subject { font-size: 21px; line-height: 1.15; }
+.cw-timetable--alumnos .cw-cell__subject.is-fit-lg { font-size: 25px; }
+.cw-timetable--alumnos .cw-cell__subject.is-fit-sm { font-size: 17px; }
+.cw-timetable--alumnos .cw-cell__teacher { font-size: 13.5px; margin-top: 5px; color: #5a677d; }
+.cw-timetable--alumnos .cw-cell__teacher.is-fit-lg { font-size: 15px; }
+.cw-timetable--alumnos .cw-cell__teacher.is-fit-sm { font-size: 12px; }
 .cw-timetable--alumnos .cw-break td { font-size: 11px; padding: 13px 6px; letter-spacing: .34em; }
 .cw-timetable--alumnos .cw-cell__key { width: 4px; min-height: 40px; }
 
 /* Vista por grado: muchas columnas, todo más apretado. */
-.cw-card--wide .cw-cell { padding: 8px 7px; height: 46px; }
-.cw-card--wide .cw-cell__subject { font-size: 11px; }
-.cw-card--wide .cw-cell__teacher { font-size: 9px; margin-top: 2px; }
+.cw-card--wide .cw-cell { padding: 7px 5px; height: 46px; }
+.cw-card--wide .cw-cell__subject { font-size: 11.5px; }
+.cw-card--wide .cw-cell__subject.is-fit-lg { font-size: 12.5px; }
+.cw-card--wide .cw-cell__subject.is-fit-sm { font-size: 10px; }
+.cw-card--wide .cw-cell__teacher { font-size: 9.5px; margin-top: 2px; }
+.cw-card--wide .cw-cell__teacher.is-fit-lg { font-size: 10.5px; }
+.cw-card--wide .cw-cell__teacher.is-fit-sm { font-size: 8.5px; }
+.cw-card--wide .cw-cell__line { gap: 5px; }
 .cw-card--wide .cw-timetable thead th { padding: 0 7px 8px; letter-spacing: .12em; }
 .cw-card--wide .cw-timetable .cw-hour { padding: 9px 10px 9px 0; }
 .cw-card--wide .cw-timetable .cw-hour b { font-size: 17px; }

@@ -17,6 +17,7 @@ import {
   PALETTE, planOf, removeSubject, removeTeacher, setTerm, syncPlans, termCountOf, termLabel,
   termOf, termSystemOf, TERM_SYSTEMS, weeklyCapacity,
 } from '../model/school.js';
+import { SUBJECT_CATALOG } from '../model/catalog.js';
 import { abbreviate, shortDay } from '../model/serialize.js';
 import { button, checkbox, clear, field, h, iconButton, input, mount, select } from './dom.js';
 
@@ -179,6 +180,8 @@ function screenMaterias(ctx) {
             }))))),
       h('td', { style: { textAlign: 'center' } },
         checkbox(subject.prefersMorning, (v) => { subject.prefersMorning = v; save(); })),
+      h('td', { style: { textAlign: 'center' } },
+        checkbox(subject.specialty, (v) => { subject.specialty = v; save(); ctx.rerender(); })),
       h('td',
         iconButton('✕', `Eliminar ${subject.name || 'materia'}`, () => {
           if (!confirm(`¿Eliminar ${subject.name || 'esta materia'}? Se quitará de todos los planes de estudio.`)) return;
@@ -193,10 +196,13 @@ function screenMaterias(ctx) {
       h('th', 'Materia'),
       h('th', { style: { width: '110px' } }, 'Abreviatura'),
       h('th', { style: { width: '190px' } }, 'Color'),
-      h('th', { style: { width: '110px', textAlign: 'center' } }, 'De mañana'),
+      h('th', { style: { width: '96px', textAlign: 'center' } }, 'De mañana'),
+      h('th', { style: { width: '104px', textAlign: 'center' } }, 'Especialidad'),
       h('th', { style: { width: '44px' } }, ''))),
-    h('tbody', rows.length ? rows : h('tr', h('td', { colSpan: 5 },
+    h('tbody', rows.length ? rows : h('tr', h('td', { colSpan: 6 },
       h('div.cw-empty', 'Agrega la primera materia para empezar.')))));
+
+  const especialidades = model.subjects.filter((s) => s.specialty);
 
   return h('div',
     sectionTitle('Materias', 'La abreviatura es lo que se ve en cada celda del horario impreso.',
@@ -209,29 +215,49 @@ function screenMaterias(ctx) {
     h('p.cw-hint',
       'Marca «De mañana» en las materias que conviene dar temprano (Matemáticas, Español…): ' +
       'CronoWeb intentará colocarlas en los primeros bloques.'),
-    model.subjects.length > 0 && button('Cargar materias comunes de secundaria', () => {
-      addCommonSubjects(model);
-      save(); ctx.rerender();
-    }, 'cw-btn cw-btn--sm'));
+    h('p.cw-hint',
+      '«Especialidad» es para la carrera técnica, el taller o el área propedéutica: ' +
+      'esas horas salen marcadas en el horario impreso para distinguirlas del tronco común.'
+      + (especialidades.length
+        ? ` Ahora mismo: ${especialidades.map((s) => s.name || 'sin nombre').join(', ')}.`
+        : '')),
+    catalogPicker(ctx));
 }
 
-const COMMON_SUBJECTS = [
-  ['Español', 'Esp', true], ['Matemáticas', 'Mat', true], ['Ciencias', 'Cie', true],
-  ['Historia', 'His', false], ['Geografía', 'Geo', false], ['Formación Cívica y Ética', 'FCyE', false],
-  ['Inglés', 'Ing', false], ['Educación Física', 'EdFís', false], ['Artes', 'Art', false],
-  ['Tecnología', 'Tec', false], ['Tutoría', 'Tut', false],
-];
+/**
+ * Carga de materias comunes, por nivel.
+ *
+ * Escribir once materias con su abreviatura y su color es exactamente el
+ * trabajo aburrido que hace que alguien cierre la pestaña antes de ver su
+ * primer horario. Se agregan sólo las que faltan, así que pulsar dos niveles en
+ * una escuela mixta no duplica nada.
+ */
+function catalogPicker(ctx) {
+  const { model, save } = ctx;
+  return h('div.cw-catalog',
+    h('span.cw-catalog__label', 'Cargar materias comunes de'),
+    LEVELS.map((nivel) => button(nivel.label, () => {
+      const agregadas = addCatalogSubjects(model, nivel.id);
+      save(); ctx.rerender();
+      if (!agregadas) alert(`Ya tienes todas las materias comunes de ${nivel.label.toLowerCase()}.`);
+    }, 'cw-btn cw-btn--sm')));
+}
 
-function addCommonSubjects(model) {
+/** Agrega las materias del nivel que aún no existan. @returns {number} cuántas */
+function addCatalogSubjects(model, levelId) {
   const existing = new Set(model.subjects.map((s) => s.name.trim().toLowerCase()));
-  for (const [name, short, morning] of COMMON_SUBJECTS) {
+  let n = 0;
+  for (const [name, short, morning] of SUBJECT_CATALOG[levelId] || []) {
     if (existing.has(name.toLowerCase())) continue;
     const subject = createSubject(model, name);
     subject.short = short;
     subject.prefersMorning = morning;
     model.subjects.push(subject);
+    existing.add(name.toLowerCase());
+    n += 1;
   }
   syncPlans(model);
+  return n;
 }
 
 // =========================================================================== //
@@ -564,7 +590,8 @@ function gradeCard(ctx, grade) {
     return h('tr',
       h('td',
         h('span.cw-swatch.cw-swatch--sm', { style: { backgroundColor: subject.color } }),
-        subject.name || 'Sin nombre'),
+        subject.name || 'Sin nombre',
+        subject.specialty && h('span.cw-tag.cw-tag--spec', 'especialidad')),
       h('td',
         input('number', entry.hours, (v) => { entry.hours = Math.max(0, v || 0); save(); refreshTotal(); },
           { min: 0, max: 40, class: 'cw-narrow' })),

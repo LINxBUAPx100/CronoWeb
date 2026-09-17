@@ -12,7 +12,8 @@
 
 import {
   allGroups, createEmptyModel, createGrade, createSubject, ensureTerm, gradeLabel,
-  isPrepa, migrateModel, planOf, reviewModel, setTerm, syncPlans, termLabel,
+  isPrepa, migrateModel, planOf, reviewModel, setTerm, syncPlans, termCountOf,
+  termLabel, TERM_SYSTEMS,
 } from '../assets/js/model/school.js';
 import { modelToScenario, scenarioToModel } from '../assets/js/model/serialize.js';
 import { normalizeRequest } from '../assets/js/engine/contract.js';
@@ -77,18 +78,29 @@ test('el número de grado sigue al periodo, para que los ids no choquen', () => 
   assert(new Set(ids).size === ids.length, `ids repetidos: ${ids}`);
 });
 
-test('semestres, cuatrimestres y trimestres valen los mismos seis periodos', () => {
+test('cada modalidad ofrece los periodos que caben en tres años', () => {
+  // 2, 3, 3, 5 y 1 periodo(s) al año × 3 años de bachillerato.
+  const esperado = {
+    semestral: 6, cuatrimestral: 9, trimestral: 9, bimestral: 15, anual: 3,
+  };
+  assert(TERM_SYSTEMS.length === Object.keys(esperado).length,
+    `hay ${TERM_SYSTEMS.length} modalidades y se esperaban ${Object.keys(esperado).length}`);
+  for (const system of TERM_SYSTEMS) {
+    assert(termCountOf({ termSystem: system.id }) === esperado[system.id],
+      `${system.id}: ${termCountOf({ termSystem: system.id })} periodos, se esperaban ${esperado[system.id]}`);
+  }
+});
+
+test('cada modalidad nombra sus periodos con su propia unidad', () => {
   for (const [system, esperado] of [
     ['semestral', '3er semestre'],
     ['cuatrimestral', '3er cuatrimestre'],
     ['trimestral', '3er trimestre'],
+    ['bimestral', '3er bimestre'],
   ]) {
     const model = prepaDeSeisPeriodos(system);
-    assert(model.grades.length === 6, `${system}: no llegó a seis periodos`);
     assert(gradeLabel(model.grades[2]) === esperado,
       `${system}: dijo «${gradeLabel(model.grades[2])}» en vez de «${esperado}»`);
-    assert(gradeLabel(model.grades[5]) === esperado.replace('3er', '6°').replace('3° ', '6° '),
-      `${system}: el sexto periodo dijo «${gradeLabel(model.grades[5])}»`);
   }
 });
 
@@ -133,7 +145,7 @@ test('el periodo viaja al contrato y sobrevive a la validación', () => {
 });
 
 test('abrir un respaldo devuelve los periodos y su modalidad', () => {
-  for (const system of ['semestral', 'cuatrimestral', 'trimestral']) {
+  for (const system of ['semestral', 'cuatrimestral', 'trimestral', 'bimestral']) {
     const { model } = scenarioToModel(modelToScenario(prepaDeSeisPeriodos(system)));
     assert(model.grades.length === 6, `${system}: volvieron ${model.grades.length} grados`);
     assert(model.grades.every(isPrepa), `${system}: no volvieron como preparatoria`);
@@ -194,11 +206,12 @@ test('un respaldo con pestañas de periodo se abre sin perder el plan activo', (
   assert(model.grades[1].plan[0].hours === 4, 'perdió el plan del respaldo más viejo');
 });
 
-test('los bimestres del modelo viejo caen en semestres', () => {
+test('la modalidad del respaldo viejo se conserva', () => {
   const viejo = respaldoViejo();
   viejo.terms = { system: 'bimestral', current: 1 };
+  delete viejo.grades[0].termSystem;
   const model = migrateModel(viejo);
-  assert(model.grades[0].termSystem === 'semestral', `quedó en ${model.grades[0].termSystem}`);
+  assert(model.grades[0].termSystem === 'bimestral', `quedó en ${model.grades[0].termSystem}`);
 });
 
 // --------------------------------------------------------------------------- //

@@ -126,6 +126,14 @@ export function createSubject(model, name = '') {
     short: '',
     color: PALETTE[model.subjects.length % PALETTE.length],
     prefersMorning: false,
+    /**
+     * Materia de especialidad: la carrera técnica del CBTIS, el taller de la
+     * secundaria técnica, el área propedéutica de la prepa. No cambia cómo se
+     * calcula el horario —una hora sigue siendo una hora— pero sale marcada en
+     * la hoja, que es lo que la escuela necesita: que se vea de un golpe cuáles
+     * son las horas de la especialidad y cuáles el tronco común.
+     */
+    specialty: false,
   };
 }
 
@@ -181,13 +189,21 @@ export const levelOf = (grade) => LEVELS.find((l) => l.id === grade?.level) || L
  * en el grado y no en la escuela: un mismo plantel puede tener el bachillerato
  * semestral por la mañana y el cuatrimestral por la tarde.
  *
- * Los tres sistemas no anuales cubren los mismos seis periodos del bachillerato
- * (los tres años completos); lo que cambia es cómo los nombra la escuela.
+ * Todos los sistemas cubren los MISMOS tres años de bachillerato; lo que cambia
+ * es en cuántos pedazos se parten, y de ahí sale cuántos periodos hay que poder
+ * capturar:
+ *
+ *   · semestral      — 2 al año  ×3 =  6   (el bachillerato general de la SEP)
+ *   · cuatrimestral  — 3 al año  ×3 =  9   (cuatro meses cada uno: ene-abr, may-ago, sep-dic)
+ *   · trimestral     — 3 al año  ×3 =  9   (los tres periodos de evaluación del ciclo)
+ *   · bimestral      — 5 al año  ×3 = 15   (ciclo de diez meses en pedazos de dos)
+ *   · anual          — 1 al año  ×3 =  3   (1°, 2° y 3° a secas)
  */
 export const TERM_SYSTEMS = [
   { id: 'semestral', label: 'Semestres', unit: 'semestre', count: 6 },
-  { id: 'cuatrimestral', label: 'Cuatrimestres', unit: 'cuatrimestre', count: 6 },
-  { id: 'trimestral', label: 'Trimestres', unit: 'trimestre', count: 6 },
+  { id: 'cuatrimestral', label: 'Cuatrimestres', unit: 'cuatrimestre', count: 9 },
+  { id: 'trimestral', label: 'Trimestres', unit: 'trimestre', count: 9 },
+  { id: 'bimestral', label: 'Bimestres', unit: 'bimestre', count: 15 },
   { id: 'anual', label: 'Anual', unit: 'año', count: 3 },
 ];
 
@@ -284,13 +300,12 @@ export function migrateModel(model) {
   return model;
 }
 
-/** Los bimestres del modelo viejo no eran periodos de plan de estudios. */
 const LEGACY_SYSTEMS = {
   anual: 'anual',
   semestral: 'semestral',
   cuatrimestral: 'cuatrimestral',
   trimestral: 'trimestral',
-  bimestral: 'semestral',
+  bimestral: 'bimestral',
 };
 
 /** ¿La escuela mezcla niveles? Decide si los ids de grupo necesitan prefijo. */

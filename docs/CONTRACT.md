@@ -36,6 +36,7 @@ implementar exactamente este contrato. Si cambias uno, cambia el otro.
       "short_name": "Mat",           // opcional, para la celda del horario
       "color": "#2563eb",            // opcional, hex; el UI genera uno si falta
       "prefers_morning": true,       // soft: empuja la materia a bloques tempranos
+      "is_specialty": false,         // opcional · carrera técnica / área propedéutica; sólo etiqueta
       "room_requirement": null       // reservado v2 (laboratorios/talleres)
     }
   ],

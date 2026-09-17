@@ -30,6 +30,9 @@ import {
   createView, FORMATS, listTargets, renderTimetableCard, VIEW_TYPES,
 } from './ui/timetable.js';
 
+/** Plan por omisión. Ver la nota en `init()`: hoy el modo Pro está abierto. */
+const DEFAULT_PLAN = 'school';
+
 const STORAGE_KEY = 'cronoweb.model.v2';
 const PREFS_KEY = 'cronoweb.prefs.v2';
 const DEMO_URL = new URL('backend/samples/demo_secundaria.json', document.baseURI).href;
@@ -46,11 +49,29 @@ const NAV = [
 // Estado
 // --------------------------------------------------------------------------- //
 const state = {
-  plan: 'free',
+  plan: DEFAULT_PLAN,
   mode: 'simple',
   model: createEmptyModel(),
   screen: 'horario',
-  prefs: { budget: 8, seed: 12345, scale: 3, engine: 'local', apiUrl: 'http://localhost:8000' },
+  /**
+   * `budget`, `seed`, `scale`, `engine` y `apiUrl` ya NO se editan desde la
+   * interfaz: son decisiones técnicas con una respuesta correcta para el 99 % de
+   * las escuelas (ocho segundos alcanzan, 3× es calidad de imprenta, y calcular
+   * en el navegador es lo que hace que los datos no salgan de la computadora).
+   * Exponerlas sólo servía para que alguien las moviera sin saber qué hacían.
+   * La semilla la cambia el botón «Otra variante» de la pantalla de horarios.
+   *
+   * `tuning` sí es de la escuela: son las tres reglas de acomodo que una
+   * dirección tiene opinión sobre ellas, en español y sin números.
+   */
+  prefs: {
+    budget: 8,
+    seed: 12345,
+    scale: 3,
+    engine: 'local',
+    apiUrl: 'http://localhost:8000',
+    tuning: { gaps: 'normal', morning: 'normal', repeat: 'normal' },
+  },
   view: null,
   resultTab: 'horarios',
   viewType: 'group',
@@ -63,7 +84,7 @@ const state = {
   editorHandle: null,
 };
 
-const gateway = new SolverGateway({ mode: 'local', plan: 'free' });
+const gateway = new SolverGateway({ mode: 'local', plan: DEFAULT_PLAN });
 
 const save = () => {
   try {
@@ -78,7 +99,11 @@ function restore() {
     const prefs = JSON.parse(localStorage.getItem(PREFS_KEY) || 'null');
     if (prefs) {
       state.mode = prefs.mode || 'simple';
-      Object.assign(state.prefs, prefs.prefs || {});
+      const guardadas = prefs.prefs || {};
+      Object.assign(state.prefs, guardadas);
+      // `tuning` es más nuevo que los respaldos: se rellena campo por campo para
+      // que un ajuste añadido después no llegue como `undefined` al selector.
+      state.prefs.tuning = { gaps: 'normal', morning: 'normal', repeat: 'normal', ...(guardadas.tuning || {}) };
     }
     const model = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
     if (model?.subjects) {
@@ -141,6 +166,9 @@ function goTo(screen) {
 
   if (!isResults && !isSettings) renderScreen();
   if (isResults) renderResults();
+  // El nombre y el ciclo se pueden haber editado en el paso 1: al entrar a
+  // Ajustes los campos se rellenan otra vez con lo que dice el modelo.
+  if (isSettings) hydrateSettings();
   renderNav();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -188,6 +216,24 @@ function updateRailStats() {
 // --------------------------------------------------------------------------- //
 // Generación
 // --------------------------------------------------------------------------- //
+/**
+ * Traduce las tres preferencias de Ajustes a los pesos del motor.
+ *
+ * La escuela elige en español —«evitarlas a toda costa»— y aquí se convierte al
+ * número que el solver usa como costo. La tabla vive en un solo sitio para que
+ * afinar los valores sea tocar cinco líneas y no buscar constantes por toda la
+ * app; los `normal` son exactamente los defaults del contrato.
+ */
+function tuningWeights(tuning = {}) {
+  const escala = { off: 0, normal: 1, alta: 2.5 };
+  const factor = (key) => escala[tuning[key]] ?? 1;
+  return {
+    teacher_gap: 3.0 * factor('gaps'),
+    morning_preference: 1.5 * factor('morning'),
+    same_day_repeat: 6.0 * factor('repeat'),
+  };
+}
+
 async function generate(options = {}) {
   if (state.busy) return;
 
@@ -195,7 +241,6 @@ async function generate(options = {}) {
     // Otra semilla = otro horario igualmente válido. Se guarda para que el
     // resultado siga siendo reproducible si mañana se regenera.
     state.prefs.seed = (Number(state.prefs.seed) || 12345) + 1;
-    $('opt-seed').value = state.prefs.seed;
     save();
   }
 
@@ -211,6 +256,7 @@ async function generate(options = {}) {
     mode: state.mode,
     budget: state.prefs.budget,
     seed: state.prefs.seed,
+    weights: tuningWeights(state.prefs.tuning),
   });
 
   gateway.configure({ mode: state.prefs.engine, apiUrl: state.prefs.apiUrl, plan: state.plan });
@@ -642,10 +688,16 @@ function bindEvents() {
     else generate();
   });
 
-  $('btn-demo').addEventListener('click', loadDemo);
-  $('btn-backup').addEventListener('click', downloadBackup);
-  $('btn-restore').addEventListener('click', () => $('file-input').click());
-  $('btn-reset').addEventListener('click', () => {
+  // Los mismos cuatro botones viven en la barra lateral y en Ajustes: la barra
+  // se puede plegar y en celular no se ve, así que Ajustes es el sitio donde
+  // siempre están.
+  const onDataAction = (ids, handler) => {
+    for (const id of ids) $(id).addEventListener('click', handler);
+  };
+  onDataAction(['btn-demo', 'btn-demo-2'], loadDemo);
+  onDataAction(['btn-backup', 'btn-backup-2'], downloadBackup);
+  onDataAction(['btn-restore', 'btn-restore-2'], () => $('file-input').click());
+  onDataAction(['btn-reset', 'btn-reset-2'], () => {
     if (!confirm('¿Borrar todos los datos capturados y empezar de cero?')) return;
     seedNewModel();
     goTo('horario');
@@ -668,18 +720,9 @@ function bindEvents() {
     event.target.value = '';
   });
 
-  const bindPref = (id, key, transform = (v) => v) => {
-    $(id).addEventListener('change', (e) => { state.prefs[key] = transform(e.target.value); save(); });
-  };
-  bindPref('opt-budget', 'budget', Number);
-  bindPref('opt-seed', 'seed', Number);
-  bindPref('opt-scale', 'scale', Number);
-  bindPref('opt-api', 'apiUrl');
-  $('opt-engine').addEventListener('change', (e) => {
-    state.prefs.engine = e.target.value;
-    $('field-api').hidden = e.target.value !== 'remote';
-    save();
-  });
+  for (const [id, key] of [['opt-gaps', 'gaps'], ['opt-morning', 'morning'], ['opt-repeat', 'repeat']]) {
+    $(id).addEventListener('change', (e) => { state.prefs.tuning[key] = e.target.value; save(); });
+  }
 
   for (const id of ['mode-simple', 'mode-simple-2']) {
     $(id).addEventListener('click', () => { state.mode = 'simple'; applyMode(); });
@@ -687,6 +730,11 @@ function bindEvents() {
   for (const id of ['mode-custom', 'mode-custom-2']) {
     $(id).addEventListener('click', requestCustomMode);
   }
+  // El nombre y el ciclo también se capturan en el paso 1: los dos campos
+  // escriben en el mismo modelo y cada pantalla se reconstruye al entrar, así
+  // que no hay forma de que se desincronicen.
+  $('brand-name').addEventListener('input', (e) => { state.model.school.name = e.target.value; save(); });
+  $('brand-cycle').addEventListener('input', (e) => { state.model.school.cycle = e.target.value; save(); });
   $('brand-color').addEventListener('change', (e) => { state.model.school.primaryColor = e.target.value; save(); });
   $('brand-note').addEventListener('input', (e) => { state.model.school.footerNote = e.target.value; save(); });
   $('brand-logo').addEventListener('change', (e) => readLogoFile(e.target.files?.[0]));
@@ -706,22 +754,24 @@ function bindEvents() {
 }
 
 function hydrateSettings() {
-  $('opt-budget').value = state.prefs.budget;
-  $('opt-seed').value = state.prefs.seed;
-  $('opt-scale').value = String(state.prefs.scale);
-  $('opt-engine').value = state.prefs.engine;
-  $('opt-api').value = state.prefs.apiUrl;
-  $('field-api').hidden = state.prefs.engine !== 'remote';
+  $('opt-gaps').value = state.prefs.tuning.gaps;
+  $('opt-morning').value = state.prefs.tuning.morning;
+  $('opt-repeat').value = state.prefs.tuning.repeat;
+  $('brand-name').value = state.model.school.name || '';
+  $('brand-cycle').value = state.model.school.cycle || '';
   $('brand-color').value = state.model.school.primaryColor || '#14417c';
   $('brand-note').value = state.model.school.footerNote || '';
 }
 
 function init() {
-  // `?plan=school` permite demostrar el modo personalizado antes de que exista el
-  // cobro. Cuando haya licencias, este valor vendrá del servidor.
+  // Mientras no exista el cobro, el plan Escuela está abierto para todos: es la
+  // única forma de probar y afinar el modo personalizado —logotipo, nombre y
+  // color en la hoja— antes de ponerle precio. `?plan=free` sigue sirviendo para
+  // ver cómo se degrada. Cuando haya licencias, este valor vendrá del servidor y
+  // DEFAULT_PLAN vuelve a 'free'.
   const urlPlan = new URLSearchParams(location.search).get('plan');
   if (urlPlan) localStorage.setItem('cronoweb.plan', urlPlan);
-  state.plan = localStorage.getItem('cronoweb.plan') || 'free';
+  state.plan = localStorage.getItem('cronoweb.plan') || DEFAULT_PLAN;
   gateway.configure({ plan: state.plan });
 
   const hadData = restore();

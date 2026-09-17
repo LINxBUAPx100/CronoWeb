@@ -193,11 +193,12 @@ function renderFoot(view, { legendSubjectIds = [], note = null, format = 'tecnic
     for (const sid of legendSubjectIds) {
       const subject = view.subjects.get(sid);
       if (!subject) continue;
-      const item = el('span');
+      const item = el('span', subject.is_specialty ? 'is-specialty' : null);
       const swatch = el('i');
       swatch.style.backgroundColor = subject.color;
       item.appendChild(swatch);
-      item.appendChild(document.createTextNode(`${subjectShort(subject)} · ${subject.name}`));
+      item.appendChild(document.createTextNode(
+        `${subjectShort(subject)} · ${subject.name}${subject.is_specialty ? ' (especialidad)' : ''}`));
       legend.appendChild(item);
     }
     left.appendChild(legend);
@@ -279,7 +280,9 @@ function renderTable(view, cellFor, { format, columns = null }) {
       for (const column of columns || [null]) {
         const raw = cellFor(day, block.id, column);
         const cells = raw == null ? [] : (Array.isArray(raw) ? raw : [raw]);
-        const td = renderCell(view, cells, format);
+        // `dense`: con varias columnas por día la casilla es la mitad de ancha,
+        // así que lo que ahí ya es «texto largo» aquí todavía cabe holgado.
+        const td = renderCell(view, cells, format, perDay > 1);
         // Coordenadas en el DOM: es lo que permite al editor manual saber en qué
         // casilla se hizo clic sin volver a construir la tabla.
         td.dataset.day = day;
@@ -295,26 +298,65 @@ function renderTable(view, cellFor, { format, columns = null }) {
 }
 
 /**
+ * Escalón de tamaño de una línea según cuánto texto lleva.
+ *
+ * Aquí no se decide ningún píxel: sólo si el texto es corto, normal o largo.
+ * Los tamaños los pone el CSS de cada vista, porque la misma palabra es «corta»
+ * en la hoja de un grupo —cinco columnas anchas— y «larga» en la de un grado,
+ * donde caben diez. Así «Mat / Ana Ibarra» se lee grande y «Formación Cívica y
+ * Ética / María de los Ángeles Gutiérrez» encoge lo justo para no partirse en
+ * cuatro renglones, sin que nadie tenga que medir nada a mano.
+ */
+function fitClass(text, short, long) {
+  const n = String(text || '').trim().length;
+  if (!n) return '';
+  if (n <= short) return ' is-fit-lg';
+  if (n > long) return ' is-fit-sm';
+  return '';
+}
+
+// Umbrales en caracteres: [corto, largo] para materia y para el renglón de
+// abajo (profesor o grupo). `dense` = varias columnas por día.
+const FIT = {
+  normal: { subject: [7, 14], second: [12, 18] },
+  dense: { subject: [4, 9], second: [9, 13] },
+};
+
+/**
  * Celda de horario.
  *
  * El color codifica la materia UNA sola vez —en el nombre— y no tres (fondo +
  * borde + texto). Rellenar 33 celdas de color es lo que hacía que la hoja
  * pareciera plantilla: mucha tinta, cero jerarquía. Sin fondos, el ojo sigue la
  * retícula tipográfica y el color queda como agrupador, no como ruido.
+ *
+ * El contenido va centrado: en una rejilla de cuarenta casillas medio vacías,
+ * un eje central es más fácil de recorrer con la vista que cinco alineaciones a
+ * la izquierda que el ojo tiene que ir a buscar columna por columna.
  */
-function renderCell(view, cells, format) {
+function renderCell(view, cells, format, dense = false) {
   const td = el('td', 'cw-cell');
   if (!cells.length) {
     td.classList.add('cw-cell--empty');
     return td;
   }
 
+  // Dos casillas apiladas en el mismo hueco dejan a cada una con la mitad del
+  // alto: se aprieta igual que si la columna fuera estrecha.
+  const fit = FIT[dense || cells.length > 1 ? 'dense' : 'normal'];
+
   for (const cell of cells) {
-    const color = view.subjects.get(cell.subjectId)?.color || '#55504a';
+    const subject = view.subjects.get(cell.subjectId);
+    const color = subject?.color || '#55504a';
     const line = el('div', 'cw-cell__line');
 
-    // En el formato para alumnos se lee de lejos: una pleca de color a la
-    // izquierda ayuda a saltar de materia en materia sin leer.
+    // La especialidad se marca en la casilla, no sólo en la leyenda: quien mira
+    // el horario pegado en la pared quiere ver de un golpe cuáles son las horas
+    // de la carrera técnica y cuáles el tronco común.
+    if (subject?.is_specialty) td.classList.add('is-specialty');
+
+    // En el formato para alumnos se lee de lejos: una pleca de color junto al
+    // texto ayuda a saltar de materia en materia sin leer.
     if (format === 'alumnos') {
       const keyline = el('i', 'cw-cell__key');
       keyline.style.backgroundColor = color;
@@ -322,10 +364,20 @@ function renderCell(view, cells, format) {
     }
 
     const body = el('div', 'cw-cell__body');
-    const primary = el('div', 'cw-cell__subject', cell.primary);
+    const primary = el('div', `cw-cell__subject${fitClass(cell.primary, ...fit.subject)}`, cell.primary);
     primary.style.color = color;
     body.appendChild(primary);
-    if (cell.secondary) body.appendChild(el('div', 'cw-cell__teacher', cell.secondary));
+    if (subject?.is_specialty) {
+      // En la hoja del salón cabe la palabra entera; donde va apretado, «ESP.»
+      // más el fondo tintado ya distinguen la casilla.
+      const badge = el('div', 'cw-cell__badge', format === 'alumnos' && !dense ? 'ESPECIALIDAD' : 'ESP.');
+      badge.style.color = color;
+      body.appendChild(badge);
+    }
+    if (cell.secondary) {
+      body.appendChild(el('div',
+        `cw-cell__teacher${fitClass(cell.secondary, ...fit.second)}`, cell.secondary));
+    }
     line.appendChild(body);
     td.appendChild(line);
   }

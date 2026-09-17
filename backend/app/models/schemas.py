@@ -105,6 +105,10 @@ class Subject(_Base):
     short_name: Optional[str] = Field(default=None, max_length=16)
     color: Optional[str] = Field(default=None, pattern=r"^#(?:[0-9a-fA-F]{3}){1,2}$")
     prefers_morning: bool = False
+    # Materia de especialidad: carrera técnica, taller, área propedéutica. El
+    # solver la trata igual que a cualquier otra —una hora es una hora—; viaja
+    # para que la hoja impresa pueda distinguirla del tronco común.
+    is_specialty: bool = False
     room_requirement: Optional[str] = None  # reservado v2
 
     @property
